@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Threat Model Schema",
+    "description": "Schema for validating the threat model YAML file.",
+    "type": "object",
+    "properties": {
+        "threat_model": {
+            "type": "object",
+            "properties": {
+                "project_name": {"type": "string"},
+                "version": {"type": "string"},
+                "last_updated": {"type": "string", "format": "date"},
+                "stride_analysis": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "category": {"type": "string"},
+                            "threats": {"type": "array", "items": {"type": "string"}},
+                            "controls": {"type": "array", "items": {"type": "string"}},
+                            "residual_risk": {"type": "string"}
+                        },
+                        "required": ["category", "threats", "controls"]
+                    }
+                },
+                "owasp_top10_mapping": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^A[0-9]{2}_[a-z_]+$": {
+                            "type": "object",
+                            "properties": {
+                                "status": {"type": "string"},
+                                "controls": {"type": "array", "items": {"type": "string"}},
+                                "tests": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["status", "controls"]
+                        }
+                    }
+                },
+                "secrets_scan": {"type": "object"},
+                "compliance": {"type": "object"},
+                "security_testing": {"type": "object"},
+                "incident_response": {"type": "object"},
+                "web_events_security": {"type": "object"},
+                "security_headers": {"type": "object"},
+                "event_handler_rules": {"type": "object"},
+                "automated_validation": {"type": "object"}
+            },
+            "required": ["project_name", "version", "stride_analysis", "owasp_top10_mapping"]
+        }
+    },
+    "required": ["threat_model"]
+}

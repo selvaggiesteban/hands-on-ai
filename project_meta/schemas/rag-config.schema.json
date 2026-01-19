@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RAG Configuration Schema",
+  "description": "Schema for validating the RAG (Retrieval-Augmented Generation) configuration file (rag-config.json).",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "vector_store": {
+      "type": "object",
+      "properties": {
+        "provider": {"type": "string"},
+        "alternatives": {"type": "array", "items": {"type": "string"}},
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "persist_directory": {"type": "string"},
+            "collection_name": {"type": "string"},
+            "distance_metric": {"type": "string"},
+            "enable_persistence": {"type": "boolean"}
+          },
+          "required": ["persist_directory", "collection_name"]
+        }
+      },
+      "required": ["provider", "configuration"]
+    },
+    "embedding_model": {
+      "type": "object",
+      "properties": {
+        "provider": {"type": "string"},
+        "model": {"type": "string"},
+        "dimensions": {"type": "integer"},
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": {"type": "string"},
+              "model": {"type": "string"},
+              "dimensions": {"type": "integer"}
+            },
+            "required": ["provider", "model"]
+          }
+        },
+        "batch_size": {"type": "integer"},
+        "rate_limit_per_minute": {"type": "integer"}
+      },
+      "required": ["provider", "model"]
+    },
+    "chunking_strategy": {
+      "type": "object",
+      "properties": {
+        "strategy": {"type": "string"},
+        "description": {"type": "string"},
+        "chunk_size": {"type": "integer"},
+        "chunk_overlap": {"type": "integer"},
+        "separators": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["strategy", "chunk_size", "chunk_overlap"]
+    },
+    "metadata_extraction": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "extractors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"},
+              "pattern": {"type": "string"},
+              "fields": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["name", "fields"]
+          }
+        }
+      }
+    },
+    "indexing": {
+      "type": "object",
+      "properties": {
+        "auto_index_on_startup": {"type": "boolean"},
+        "watch_for_changes": {"type": "boolean"},
+        "incremental_updates": {"type": "boolean"},
+        "index_patterns": {"type": "array", "items": {"type": "string"}},
+        "exclude_patterns": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "properties": {
+        "default_k": {"type": "integer"},
+        "max_k": {"type": "integer"},
+        "similarity_threshold": {"type": "number"},
+        "reranking": {
+            "type": "object",
+            "properties": {
+                "enabled": {"type": "boolean"}
+            }
+        }
+      }
+    },
+    "query_processing": {
+      "type": "object",
+      "properties": {
+        "query_expansion": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "caching": {
+        "type": "object",
+        "properties": {
+            "enabled": {"type": "boolean"}
+        }
+    },
+    "performance": {
+        "type": "object",
+        "properties": {
+            "parallel_processing": {"type": "boolean"}
+        }
+    },
+    "context_assembly": {
+        "type": "object",
+        "properties": {
+            "max_total_tokens": {"type": "integer"}
+        }
+    },
+    "monitoring": {
+        "type": "object",
+        "properties": {
+            "log_queries": {"type": "boolean"}
+        }
+    }
+  },
+  "required": [
+    "vector_store",
+    "embedding_model",
+    "chunking_strategy",
+    "indexing",
+    "retrieval"
+  ]
+}

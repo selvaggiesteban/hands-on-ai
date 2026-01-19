@@ -4,7 +4,8 @@ Anthropic Provider - Proveedor para modelos de Anthropic (Claude)
 
 import asyncio
 import time
-from typing import List, Optional, Dict
+import json
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 try:
@@ -21,20 +22,14 @@ class AnthropicProvider(BaseProvider):
 
     # Precios por 1M tokens (Enero 2026)
     PRICING = {
-        'claude-opus-4-5-20251101': {'input': 15.00, 'output': 75.00},
-        'claude-sonnet-4-5-20250929': {'input': 3.00, 'output': 15.00},
-        'claude-haiku-4-5-20251001': {'input': 0.25, 'output': 1.25},
-        'claude-3-5-sonnet-latest': {'input': 3.00, 'output': 15.00},
+        'claude-3-5-sonnet-20240620': {'input': 3.00, 'output': 15.00},
+        'claude-3-opus-20240229': {'input': 15.00, 'output': 75.00},
+        'claude-3-haiku-20240307': {'input': 0.25, 'output': 1.25},
     }
 
-    MODELS = [
-        'claude-opus-4-5-20251101',
-        'claude-sonnet-4-5-20250929',
-        'claude-haiku-4-5-20251001',
-        'claude-3-5-sonnet-latest'
-    ]
+    MODELS = ['claude-3-5-sonnet-20240620', 'claude-3-opus-20240229', 'claude-3-haiku-20240307']
 
-    def __init__(self, api_key: str, model: str = 'claude-sonnet-4-5-20250929'):
+    def __init__(self, api_key: str, model: str = 'claude-3-5-sonnet-20240620'):
         super().__init__(api_key, model)
         self.name = "anthropic"
 
@@ -55,63 +50,67 @@ class AnthropicProvider(BaseProvider):
         self,
         messages: List[Message],
         system_prompt: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7
     ) -> AIResponse:
-        """Genera respuesta usando Anthropic Claude."""
+        """Genera respuesta usando Anthropic Claude, con soporte para tool calling."""
         if not self.is_available:
             raise Exception(f"Anthropic no disponible: {self.last_error}")
-
+        
+        super().generate(messages=messages, tools=tools)
         start_time = time.time()
 
-        # Construir mensajes en formato Anthropic
         anthropic_messages = []
-
         for msg in messages:
-            anthropic_messages.append({
-                "role": msg.role if msg.role != 'system' else 'user',
-                "content": msg.content
-            })
+            anthropic_messages.append({"role": msg.role, "content": msg.content})
 
         try:
-            kwargs = {
+            request_params = {
                 'model': self.model,
                 'messages': anthropic_messages,
                 'max_tokens': max_tokens,
+                'temperature': temperature,
             }
-
-            # Claude no soporta temperature para o1-like models
-            if 'opus' not in self.model:
-                kwargs['temperature'] = temperature
-
             if system_prompt:
-                kwargs['system'] = system_prompt
+                request_params['system'] = system_prompt
+            if tools:
+                request_params['tools'] = tools
+                request_params['tool_choice'] = {"type": "auto"}
 
-            response = await self.client.messages.create(**kwargs)
-
+            response = await self.client.messages.create(**request_params)
             latency_ms = int((time.time() - start_time) * 1000)
 
-            content = response.content[0].text if response.content else ""
-            tokens_input = response.usage.input_tokens
-            tokens_output = response.usage.output_tokens
-            tokens_total = tokens_input + tokens_output
-
-            cost = self.calculate_cost(tokens_input, tokens_output)
+            content = None
+            tool_calls = None
+            
+            if response.stop_reason == "tool_use":
+                tool_calls = []
+                for block in response.content:
+                    if block.type == "tool_use":
+                        tool_calls.append({
+                            "id": block.id,
+                            "type": "function",
+                            "function": {
+                                "name": block.name,
+                                "arguments": block.input,
+                            }
+                        })
+            elif response.content:
+                content = response.content[0].text
 
             result = AIResponse(
-                content=content,
                 provider=self.name,
                 model=self.model,
-                tokens_input=tokens_input,
-                tokens_output=tokens_output,
-                tokens_total=tokens_total,
-                cost_usd=cost,
-                latency_ms=latency_ms,
                 timestamp=datetime.now().isoformat(),
-                metadata={
-                    'stop_reason': response.stop_reason,
-                    'id': response.id
-                }
+                content=content,
+                tool_calls=tool_calls,
+                tokens_input=response.usage.input_tokens,
+                tokens_output=response.usage.output_tokens,
+                tokens_total=response.usage.input_tokens + response.usage.output_tokens,
+                cost_usd=self.calculate_cost(response.usage.input_tokens, response.usage.output_tokens),
+                latency_ms=latency_ms,
+                metadata={'stop_reason': response.stop_reason, 'id': response.id}
             )
 
             self.update_stats(result)
@@ -119,19 +118,15 @@ class AnthropicProvider(BaseProvider):
 
         except Exception as e:
             self.last_error = str(e)
+            self.logger.error("Anthropic API call failed", error=e, provider=self.name)
             raise
 
     async def validate_key(self) -> bool:
         """Valida la API key de Anthropic."""
-        if not ANTHROPIC_AVAILABLE:
-            return False
+        if not ANTHROPIC_AVAILABLE: return False
         try:
-            # Anthropic no tiene endpoint de validación simple
-            # Intentamos una llamada mínima
             await self.client.messages.create(
-                model=self.model,
-                messages=[{"role": "user", "content": "test"}],
-                max_tokens=1
+                model=self.model, messages=[{"role": "user", "content": "test"}], max_tokens=1
             )
             self.is_available = True
             return True
@@ -146,7 +141,7 @@ class AnthropicProvider(BaseProvider):
 
     def calculate_cost(self, tokens_input: int, tokens_output: int) -> float:
         """Calcula costo en USD."""
-        pricing = self.PRICING.get(self.model, self.PRICING['claude-sonnet-4-5-20250929'])
+        pricing = self.PRICING.get(self.model, self.PRICING['claude-3-5-sonnet-20240620'])
         cost_input = (tokens_input / 1_000_000) * pricing['input']
         cost_output = (tokens_output / 1_000_000) * pricing['output']
         return round(cost_input + cost_output, 6)

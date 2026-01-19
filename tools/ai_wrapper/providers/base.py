@@ -5,27 +5,31 @@ Define el contrato que deben implementar todos los proveedores.
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+from ..logging_config import get_logger
 
+logger = get_logger(__name__)
 
 @dataclass
 class AIResponse:
     """Respuesta estandarizada de cualquier proveedor de IA."""
-    content: str
     provider: str
     model: str
-    tokens_input: int
-    tokens_output: int
-    tokens_total: int
-    cost_usd: float
-    latency_ms: int
     timestamp: str
-    metadata: Dict[str, Any] = None
+    content: Optional[str] = None
+    tool_calls: Optional[List[Dict[str, Any]]] = None
+    tokens_input: int = 0
+    tokens_output: int = 0
+    tokens_total: int = 0
+    cost_usd: float = 0.0
+    latency_ms: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict:
         return {
             'content': self.content,
+            'tool_calls': self.tool_calls,
             'provider': self.provider,
             'model': self.model,
             'tokens': {
@@ -39,12 +43,12 @@ class AIResponse:
             'metadata': self.metadata or {}
         }
 
-
 @dataclass
 class Message:
     """Mensaje en una conversación."""
-    role: str  # 'user', 'assistant', 'system'
+    role: str  # 'user', 'assistant', 'system', 'tool'
     content: str
+    tool_call_id: Optional[str] = None
 
 
 class BaseProvider(ABC):
@@ -62,27 +66,37 @@ class BaseProvider(ABC):
         self.request_count = 0
         self.total_tokens = 0
         self.total_cost = 0.0
+        self.logger = get_logger(f"provider.{self.name}")
 
     @abstractmethod
     async def generate(
         self,
         messages: List[Message],
         system_prompt: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7
     ) -> AIResponse:
         """
-        Genera una respuesta a partir de los mensajes.
+        Genera una respuesta a partir de los mensajes, opcionalmente usando herramientas.
 
         Args:
-            messages: Lista de mensajes de la conversación
-            system_prompt: Prompt del sistema (opcional)
-            max_tokens: Máximo de tokens en la respuesta
-            temperature: Temperatura para la generación
+            messages: Lista de mensajes de la conversación.
+            system_prompt: Prompt del sistema (opcional).
+            tools: Lista de herramientas disponibles para el modelo.
+            max_tokens: Máximo de tokens en la respuesta.
+            temperature: Temperatura para la generación.
 
         Returns:
-            AIResponse con la respuesta generada
+            AIResponse con la respuesta o la invocación de la herramienta.
         """
+        self.logger.info(
+            "Generating response",
+            provider=self.name,
+            model=self.model,
+            message_count=len(messages),
+            has_tools=bool(tools)
+        )
         pass
 
     @abstractmethod
@@ -105,6 +119,15 @@ class BaseProvider(ABC):
         self.request_count += 1
         self.total_tokens += response.tokens_total
         self.total_cost += response.cost_usd
+        self.logger.info(
+            "Request finished",
+            provider=self.name,
+            model=self.model,
+            latency_ms=response.latency_ms,
+            total_tokens=response.tokens_total,
+            cost_usd=response.cost_usd,
+            has_tool_calls=bool(response.tool_calls)
+        )
 
     def get_stats(self) -> Dict:
         """Retorna estadísticas del proveedor."""

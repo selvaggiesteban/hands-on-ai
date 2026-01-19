@@ -4,11 +4,13 @@ Gemini Provider - Proveedor para modelos de Google Gemini
 
 import asyncio
 import time
-from typing import List, Optional, Dict
+import json
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 try:
     import google.generativeai as genai
+    from google.generativeai.types import FunctionCall
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -21,30 +23,19 @@ class GeminiProvider(BaseProvider):
 
     # Precios por 1M tokens (Enero 2026)
     PRICING = {
-        'gemini-3-pro': {'input': 1.25, 'output': 5.00},
-        'gemini-3-flash': {'input': 0.075, 'output': 0.30},
-        'gemini-2.5-pro': {'input': 1.25, 'output': 5.00},
-        'gemini-2.5-flash': {'input': 0.075, 'output': 0.30},
-        'gemini-2.5-flash-lite': {'input': 0.0375, 'output': 0.15},
-        'gemini-2.0-flash': {'input': 0.075, 'output': 0.30},
+        'gemini-1.5-pro-latest': {'input': 3.50, 'output': 10.50},
+        'gemini-1.5-flash-latest': {'input': 0.35, 'output': 1.05},
     }
 
-    MODELS = [
-        'gemini-3-pro',
-        'gemini-3-flash',
-        'gemini-2.5-pro',
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash'
-    ]
+    MODELS = ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest']
 
-    def __init__(self, api_key: str, model: str = 'gemini-2.5-flash'):
+    def __init__(self, api_key: str, model: str = 'gemini-1.5-flash-latest'):
         super().__init__(api_key, model)
         self.name = "gemini"
 
         if not GEMINI_AVAILABLE:
             self.is_available = False
-            self.last_error = "google-generativeai package not installed"
+            self.last_error = "google-genai package not installed or configured"
             return
 
         if not api_key:
@@ -53,92 +44,88 @@ class GeminiProvider(BaseProvider):
             return
 
         genai.configure(api_key=api_key)
-        self.genai_model = genai.GenerativeModel(model)
         self.is_available = True
 
     async def generate(
         self,
         messages: List[Message],
         system_prompt: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7
     ) -> AIResponse:
-        """Genera respuesta usando Google Gemini."""
+        """Genera respuesta usando Google Gemini, con soporte para tool calling."""
         if not self.is_available:
             raise Exception(f"Gemini no disponible: {self.last_error}")
 
+        super().generate(messages=messages, tools=tools)
         start_time = time.time()
+        
+        genai_model = genai.GenerativeModel(
+            model_name=self.model,
+            system_instruction=system_prompt
+        )
 
-        # Construir historial y prompt
         history = []
-        current_prompt = ""
-
         for msg in messages:
-            if msg.role == 'user':
-                if current_prompt:
-                    history.append({'role': 'user', 'parts': [current_prompt]})
-                    current_prompt = ""
-                current_prompt = msg.content
-            elif msg.role == 'assistant':
-                if current_prompt:
-                    history.append({'role': 'user', 'parts': [current_prompt]})
-                    current_prompt = ""
-                history.append({'role': 'model', 'parts': [msg.content]})
-
-        # Agregar system prompt al inicio si existe
-        if system_prompt and current_prompt:
-            current_prompt = f"{system_prompt}\n\n{current_prompt}"
-        elif system_prompt:
-            current_prompt = system_prompt
+            role = "user" if msg.role == "user" else "model"
+            history.append({'role': role, 'parts': [msg.content]})
 
         try:
-            # Gemini usa API síncrona, ejecutar en thread
             loop = asyncio.get_event_loop()
 
             def sync_generate():
-                chat = self.genai_model.start_chat(history=history)
+                chat = genai_model.start_chat(history=history)
                 generation_config = genai.types.GenerationConfig(
                     max_output_tokens=max_tokens,
                     temperature=temperature
                 )
+                
+                # Gemini espera el último mensaje del usuario por separado
+                last_user_message = history.pop()
+                
                 return chat.send_message(
-                    current_prompt,
-                    generation_config=generation_config
+                    last_user_message['parts'],
+                    generation_config=generation_config,
+                    tools=tools if tools else None
                 )
 
             response = await loop.run_in_executor(None, sync_generate)
-
             latency_ms = int((time.time() - start_time) * 1000)
 
-            content = response.text if response.text else ""
+            content = None
+            tool_calls = None
+            
+            # Procesar la respuesta para tool calls o contenido de texto
+            part = response.parts[0]
+            if part.function_call:
+                fc = part.function_call
+                tool_calls = [{
+                    "id": f"call_{fc.name}_{int(time.time())}", # Gemini no provee ID, se genera uno
+                    "type": "function",
+                    "function": {
+                        "name": fc.name,
+                        "arguments": dict(fc.args),
+                    }
+                }]
+            else:
+                content = response.text
 
-            # Gemini no siempre reporta tokens exactos
-            # Estimación básica: 1 token ~ 4 caracteres
-            tokens_input = len(current_prompt) // 4 + sum(len(str(h)) for h in history) // 4
-            tokens_output = len(content) // 4
-            tokens_total = tokens_input + tokens_output
-
-            # Usar usage_metadata si está disponible
-            if hasattr(response, 'usage_metadata') and response.usage_metadata:
-                if hasattr(response.usage_metadata, 'prompt_token_count'):
-                    tokens_input = response.usage_metadata.prompt_token_count
-                if hasattr(response.usage_metadata, 'candidates_token_count'):
-                    tokens_output = response.usage_metadata.candidates_token_count
-                tokens_total = tokens_input + tokens_output
-
-            cost = self.calculate_cost(tokens_input, tokens_output)
+            tokens_input = response.usage_metadata.prompt_token_count
+            tokens_output = response.usage_metadata.candidates_token_count
 
             result = AIResponse(
-                content=content,
                 provider=self.name,
                 model=self.model,
+                timestamp=datetime.now().isoformat(),
+                content=content,
+                tool_calls=tool_calls,
                 tokens_input=tokens_input,
                 tokens_output=tokens_output,
-                tokens_total=tokens_total,
-                cost_usd=cost,
+                tokens_total=tokens_input + tokens_output,
+                cost_usd=self.calculate_cost(tokens_input, tokens_output),
                 latency_ms=latency_ms,
-                timestamp=datetime.now().isoformat(),
-                metadata={}
+                metadata={'finish_reason': response.candidates[0].finish_reason.name}
             )
 
             self.update_stats(result)
@@ -146,12 +133,12 @@ class GeminiProvider(BaseProvider):
 
         except Exception as e:
             self.last_error = str(e)
+            self.logger.error("Gemini API call failed", error=e, provider=self.name)
             raise
 
     async def validate_key(self) -> bool:
         """Valida la API key de Gemini."""
-        if not GEMINI_AVAILABLE:
-            return False
+        if not GEMINI_AVAILABLE: return False
         try:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: list(genai.list_models()))
@@ -168,7 +155,7 @@ class GeminiProvider(BaseProvider):
 
     def calculate_cost(self, tokens_input: int, tokens_output: int) -> float:
         """Calcula costo en USD."""
-        pricing = self.PRICING.get(self.model, self.PRICING['gemini-2.5-flash'])
+        pricing = self.PRICING.get(self.model, self.PRICING['gemini-1.5-flash-latest'])
         cost_input = (tokens_input / 1_000_000) * pricing['input']
         cost_output = (tokens_output / 1_000_000) * pricing['output']
         return round(cost_input + cost_output, 6)

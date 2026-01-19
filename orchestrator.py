@@ -10,6 +10,7 @@ import asyncio
 import subprocess
 import glob
 from datetime import datetime
+from typing import Dict, List, Any, Optional, Callable
 
 # Configuración de rutas del sistema
 SYSTEM_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -26,9 +27,17 @@ try:
     from ai_wrapper.multi_model import MultiModelProcessor, MultiModelConfig
     from ai_wrapper.chat_manager import ChatManager
     from ai_wrapper.providers.base import Message
+    from ai_wrapper.logging_config import get_logger
     AI_AVAILABLE = True
+    logger = get_logger("orchestrator")
 except ImportError:
     AI_AVAILABLE = False
+    # Mock logger if AI is not available
+    class MockLogger:
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: print(f"LOGGER.{name}:", *args, **kwargs)
+    logger = MockLogger()
+
 
 class Orchestrator:
     def __init__(self):
@@ -38,25 +47,118 @@ class Orchestrator:
         self._init_ai()
         self._init_ui()
         self._init_chat_manager()
+        self._init_toolbox()
 
     def _init_ai(self):
         if AI_AVAILABLE:
             try:
-                # Recargar configuración desde .env si existe
                 config = MultiModelConfig(parallel_execution=True)
                 self.ai = MultiModelProcessor(config)
+                logger.info("AI MultiModelProcessor initialized successfully.")
             except Exception as e:
                 self.ai = None
+                logger.error("Failed to initialize AI MultiModelProcessor", error=str(e))
 
     def _init_chat_manager(self):
         if AI_AVAILABLE:
-            # Historial persistente en el proyecto activo
             history_path = os.path.join(self.active_root, "chat_history.json")
             self.chat_manager = ChatManager(history_path)
+            logger.info("ChatManager initialized.", path=history_path)
 
     def _init_ui(self):
         os.system('cls' if os.name == 'nt' else 'clear')
 
+    def _init_toolbox(self):
+        """Define el cinturón de herramientas del agente."""
+        self.TOOL_DEFINITIONS = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "write_file",
+                    "description": "Escribe o sobrescribe contenido en un archivo en la ruta especificada. Crea los directorios si no existen.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string", "description": "Ruta relativa del archivo a escribir."},
+                            "content": {"type": "string", "description": "El contenido a escribir en el archivo."}
+                        },
+                        "required": ["file_path", "content"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Lee y retorna el contenido de un archivo en la ruta especificada.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string", "description": "Ruta relativa del archivo a leer."}
+                        },
+                        "required": ["file_path"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_directory",
+                    "description": "Lista el contenido (archivos y directorios) de una ruta especificada.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "dir_path": {"type": "string", "description": "Ruta relativa del directorio a listar. Usa '.' para el directorio actual."}
+                        },
+                        "required": ["dir_path"]
+                    }
+                }
+            }
+        ]
+        self.AVAILABLE_TOOLS: Dict[str, Callable] = {
+            "write_file": self._tool_write_file,
+            "read_file": self._tool_read_file,
+            "list_directory": self._tool_list_directory
+        }
+        logger.info("Toolbox initialized.", tools=list(self.AVAILABLE_TOOLS.keys()))
+
+    # =========================================================================
+    #  HERRAMIENTAS (TOOLBELT)
+    # =========================================================================
+
+    def _tool_write_file(self, file_path: str, content: str) -> str:
+        full_path = os.path.join(self.active_root, file_path)
+        try:
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            logger.info("Tool executed: write_file", path=full_path, size=len(content))
+            return f"Archivo '{file_path}' escrito exitosamente."
+        except Exception as e:
+            logger.error("Tool failed: write_file", path=full_path, error=str(e))
+            return f"Error al escribir archivo '{file_path}': {e}"
+
+    def _tool_read_file(self, file_path: str) -> str:
+        full_path = os.path.join(self.active_root, file_path)
+        try:
+            with open(full_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            logger.info("Tool executed: read_file", path=full_path, size=len(content))
+            return content
+        except Exception as e:
+            logger.error("Tool failed: read_file", path=full_path, error=str(e))
+            return f"Error al leer archivo '{file_path}': {e}"
+
+    def _tool_list_directory(self, dir_path: str) -> str:
+        full_path = os.path.join(self.active_root, dir_path)
+        try:
+            entries = os.listdir(full_path)
+            logger.info("Tool executed: list_directory", path=full_path, count=len(entries))
+            return json.dumps(entries)
+        except Exception as e:
+            logger.error("Tool failed: list_directory", path=full_path, error=str(e))
+            return f"Error al listar directorio '{dir_path}': {e}"
+            
     # =========================================================================
     #  INTERFAZ Y MENÚS (UI/UX)
     # =========================================================================
@@ -433,29 +535,57 @@ class Orchestrator:
 
     # --- Helpers y Chat Standard ---
     
-    async def chat_ai(self, prompt):
-        if not self.ai: return print("❌ Configura IA primero.")
-        
-        if self.chat_manager: self.chat_manager.add_message('user', prompt)
-        
-        # Inyección de Contexto Profundo
-        msgs = []
-        # 1. System Prompt con info del entorno
-        sys_p = f"Proyecto: {self.active_root}. Eres un asistente experto Hands-On AI."
-        
-        # 2. Historial Reciente
+    async def chat_ai(self, prompt: str):
+        """Maneja la conversación con el IA, incluyendo el bucle de tool calling."""
+        if not self.ai:
+            print("❌ IA no configurada. Usa /config primero.")
+            return
+
         if self.chat_manager:
-            hist = self.chat_manager.get_context(limit=10)
-            for h in hist: msgs.append(Message(role=h['role'], content=h['content']))
-        else:
-            msgs.append(Message(role='user', content=prompt))
-            
-        try:
-            resp = await self.ai.process_single(messages=msgs, system_prompt=sys_p)
-            if self.chat_manager: self.chat_manager.add_message('assistant', resp.content)
-            print(f"\n🤖 {resp.content}\n")
-        except Exception as e:
-            print(f"❌ Error: {e}")
+            self.chat_manager.add_message('user', prompt)
+
+        messages: List[Message] = self.chat_manager.get_context(limit=20) if self.chat_manager else [Message(role='user', content=prompt)]
+
+        sys_prompt = f"Eres un asistente de desarrollo de software experto que opera en el directorio '{self.active_root}'. Puedes y debes usar las herramientas provistas para completar las tareas solicitadas."
+
+        MAX_TOOL_CALLS = 5
+        for _ in range(MAX_TOOL_CALLS):
+            response = await self.ai.process_single(
+                messages=messages,
+                system_prompt=sys_prompt,
+                tools=self.TOOL_DEFINITIONS
+            )
+
+            if response.tool_calls:
+                print(f"\n🤖 Invocando herramienta: {response.tool_calls[0]['function']['name']}...")
+                logger.info("AI requested tool call", tool_calls=response.tool_calls)
+                messages.append(Message(role="assistant", content=response.content or "", tool_calls=response.tool_calls))
+                
+                for tool_call in response.tool_calls:
+                    tool_name = tool_call['function']['name']
+                    tool_args = tool_call['function']['arguments']
+                    tool_id = tool_call['id']
+                    
+                    if tool_name in self.AVAILABLE_TOOLS:
+                        tool_function = self.AVAILABLE_TOOLS[tool_name]
+                        try:
+                            result = tool_function(**tool_args)
+                            messages.append(Message(role="tool", content=result, tool_call_id=tool_id))
+                        except Exception as e:
+                            error_msg = f"Error ejecutando la herramienta {tool_name}: {e}"
+                            logger.error("Tool execution failed", tool=tool_name, error=str(e))
+                            messages.append(Message(role="tool", content=error_msg, tool_call_id=tool_id))
+                    else:
+                        error_msg = f"Herramienta desconocida: {tool_name}"
+                        logger.warning("Unknown tool requested", tool_name=tool_name)
+                        messages.append(Message(role="tool", content=error_msg, tool_call_id=tool_id))
+            else:
+                print(f"\n🤖 {response.content}\n")
+                if self.chat_manager:
+                    self.chat_manager.add_message('assistant', response.content)
+                return  # Termina el bucle si no hay más tool calls
+
+        print("\n🤖 Límite de invocaciones de herramientas alcanzado. La tarea puede estar incompleta.")
 
     def cmd_print(self):
         """Genera un reporte legible del Plan Maestro, sin JSON."""

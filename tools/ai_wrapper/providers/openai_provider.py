@@ -4,7 +4,8 @@ OpenAI Provider - Proveedor para modelos de OpenAI (GPT-4, GPT-4o, o1)
 
 import asyncio
 import time
-from typing import List, Optional, Dict
+import json
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 try:
@@ -52,61 +53,70 @@ class OpenAIProvider(BaseProvider):
         self,
         messages: List[Message],
         system_prompt: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7
     ) -> AIResponse:
-        """Genera respuesta usando OpenAI."""
+        """Genera respuesta usando OpenAI, con soporte para tool calling."""
         if not self.is_available:
             raise Exception(f"OpenAI no disponible: {self.last_error}")
 
+        super().generate(messages=messages, tools=tools)
         start_time = time.time()
 
-        # Construir mensajes en formato OpenAI
         openai_messages = []
-
         if system_prompt:
-            openai_messages.append({
-                "role": "system",
-                "content": system_prompt
-            })
+            openai_messages.append({"role": "system", "content": system_prompt})
 
         for msg in messages:
-            openai_messages.append({
-                "role": msg.role,
-                "content": msg.content
-            })
-
+            message_dict = {"role": msg.role, "content": msg.content}
+            if msg.role == "tool":
+                message_dict["tool_call_id"] = msg.tool_call_id
+            openai_messages.append(message_dict)
+            
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=openai_messages,
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
+            request_params = {
+                'model': self.model,
+                'messages': openai_messages,
+                'max_tokens': max_tokens,
+                'temperature': temperature,
+            }
+            if tools:
+                request_params['tools'] = tools
+                request_params['tool_choice'] = "auto"
+
+            response = await self.client.chat.completions.create(**request_params)
 
             latency_ms = int((time.time() - start_time) * 1000)
+            choice = response.choices[0]
+            message = choice.message
 
-            content = response.choices[0].message.content or ""
-            tokens_input = response.usage.prompt_tokens
-            tokens_output = response.usage.completion_tokens
-            tokens_total = response.usage.total_tokens
-
-            cost = self.calculate_cost(tokens_input, tokens_output)
+            tool_calls = None
+            if message.tool_calls:
+                tool_calls = [
+                    {
+                        "id": tc.id,
+                        "type": tc.type,
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": json.loads(tc.function.arguments),
+                        },
+                    }
+                    for tc in message.tool_calls
+                ]
 
             result = AIResponse(
-                content=content,
                 provider=self.name,
                 model=self.model,
-                tokens_input=tokens_input,
-                tokens_output=tokens_output,
-                tokens_total=tokens_total,
-                cost_usd=cost,
-                latency_ms=latency_ms,
                 timestamp=datetime.now().isoformat(),
-                metadata={
-                    'finish_reason': response.choices[0].finish_reason,
-                    'id': response.id
-                }
+                content=message.content,
+                tool_calls=tool_calls,
+                tokens_input=response.usage.prompt_tokens,
+                tokens_output=response.usage.completion_tokens,
+                tokens_total=response.usage.total_tokens,
+                cost_usd=self.calculate_cost(response.usage.prompt_tokens, response.usage.completion_tokens),
+                latency_ms=latency_ms,
+                metadata={'finish_reason': choice.finish_reason, 'id': response.id}
             )
 
             self.update_stats(result)
@@ -114,12 +124,12 @@ class OpenAIProvider(BaseProvider):
 
         except Exception as e:
             self.last_error = str(e)
+            self.logger.error("OpenAI API call failed", error=e, provider=self.name)
             raise
 
     async def validate_key(self) -> bool:
         """Valida la API key de OpenAI."""
-        if not OPENAI_AVAILABLE:
-            return False
+        if not OPENAI_AVAILABLE: return False
         try:
             await self.client.models.list()
             self.is_available = True

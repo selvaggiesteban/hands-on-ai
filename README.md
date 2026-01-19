@@ -54,6 +54,15 @@ Sistema de agentes especializados que trabajan en conjunto:
 - **Optimization Agent**: Refactoring y mejoras de performance
 - **Documentation Agent**: Generación automática de docs
 
+### 🌐 Soporte Multi-LLM y Ejecución de Herramientas
+
+El sistema está diseñado desde cero para ser agnóstico al proveedor de IA.
+- **Proveedores Soportados**: OpenAI, Google Gemini, Anthropic Claude.
+- **Ejecución Autónoma de Herramientas**: Cada proveedor puede solicitar la ejecución de herramientas (tool calling), permitiendo a los agentes interactuar con el entorno local de forma segura.
+- **Configuración Sencilla**: Cambia de proveedor fácilmente a través de variables de entorno.
+
+Para más detalles técnicos, consulta la [Guía de Ejecución de Herramientas Multi-LLM](knowledge_base/setup/12-Multi-LLM-Tool-Execution.md).
+
 ### 📚 Sistema RAG Integrado
 
 - **Indexación automática** de knowledge base y planning documents

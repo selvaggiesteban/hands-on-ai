@@ -4,9 +4,6 @@ import asyncio
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 
-# Cargar variables de entorno desde .env
-load_dotenv()
-
 from .base import Message
 from .openai_provider import OpenAIProvider
 from .gemini_provider import GeminiProvider
@@ -41,16 +38,29 @@ mock_tools_definition: List[Dict[str, Any]] = [
     }
 ]
 
-# --- Proveedores para Probar ---
-providers = []
-if os.getenv("OPENAI_API_KEY"):
-    providers.append(OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"), model=os.getenv("AI_MODEL", "gpt-4o-mini")))
-if os.getenv("GEMINI_API_KEY"):
-    providers.append(GeminiProvider(api_key=os.getenv("GEMINI_API_KEY"), model=os.getenv("AI_MODEL", "gemini-1.5-flash")))
-if os.getenv("ANTHROPIC_API_KEY"):
-    providers.append(AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"), model=os.getenv("AI_MODEL", "claude-3-5-sonnet-latest")))
+def pytest_generate_tests(metafunc):
+    load_dotenv()
 
-@pytest.mark.parametrize("provider", providers)
+    configured_providers = []
+
+    if os.getenv("OPENAI_API_KEY"):
+        model = os.getenv("AI_MODEL", "gpt-4o-mini")
+        configured_providers.append(OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"), model=model))
+
+    if os.getenv("GEMINI_API_KEY"):
+        model = os.getenv("AI_MODEL", "gemini-1.5-flash-latest")
+        configured_providers.append(GeminiProvider(api_key=os.getenv("GEMINI_API_KEY"), model=model))
+
+    if os.getenv("ANTHROPIC_API_KEY"):
+        model = os.getenv("AI_MODEL", "claude-3-5-sonnet-latest")
+        configured_providers.append(AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"), model=model))
+
+    if "provider" in metafunc.fixturenames:
+        if not configured_providers:
+            pytest.skip("No se encontraron API keys configuradas. Saltando pruebas.")
+        metafunc.parametrize("provider", configured_providers)
+
+
 @pytest.mark.asyncio
 async def test_tool_calling_for_provider(provider):
     """
@@ -68,23 +78,17 @@ async def test_tool_calling_for_provider(provider):
             tools=mock_tools_definition
         )
 
-        # Verificar logs (se imprimen en la salida de pytest)
-        print(f"\n--- Logs for {provider.name} ---")
-        print(f"Response object: {response.to_dict()}")
-        print("--- End Logs ---")
-
-        # Asertos
-        assert response.content is None, f"Se esperaba una llamada a herramienta, pero se recibió contenido: {response.content}"
-        assert response.tool_calls is not None, "La respuesta no contiene llamadas a herramientas."
-        assert len(response.tool_calls) > 0, "La lista de llamadas a herramientas está vacía."
+        assert response.content is None
+        assert response.tool_calls is not None
+        assert len(response.tool_calls) > 0
         
         tool_call = response.tool_calls[0]
-        assert tool_call['type'] == 'function', f"El tipo de llamada esperado era 'function', se obtuvo '{tool_call['type']}'"
-        assert tool_call['function']['name'] == 'get_weather', f"Se esperaba la función 'get_weather', se obtuvo '{tool_call['function']['name']}'"
+        assert tool_call['type'] == 'function'
+        assert tool_call['function']['name'] == 'get_weather'
         
         arguments = tool_call['function']['arguments']
-        assert "location" in arguments, "El argumento 'location' no se encontró en la llamada a la herramienta."
-        assert "london" in arguments["location"].lower(), f"Se esperaba 'london' en la ubicación, se obtuvo '{arguments['location']}'"
+        assert "location" in arguments
+        assert "london" in arguments["location"].lower()
 
     except Exception as e:
-        pytest.fail(f"La prueba de tool calling para {provider.name} falló con una excepción: {e}")
+        pytest.fail(f"La prueba para {provider.name} falló con una excepción: {e}")

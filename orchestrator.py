@@ -4,6 +4,7 @@
 
 import os
 import sys
+import re
 import json
 import shutil
 import asyncio
@@ -11,6 +12,11 @@ import subprocess
 import glob
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
+
+# Fix for Windows Unicode Console
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 # Configuración de rutas del sistema
 SYSTEM_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -38,16 +44,64 @@ except ImportError:
             return lambda *args, **kwargs: print(f"LOGGER.{name}:", *args, **kwargs)
     logger = MockLogger()
 
+# Intentar importar Enhanced Multi-Agent System
+try:
+    sys.path.append(SYSTEM_ROOT)
+    from integrations.enhanced_multi_agent_system import EnhancedMultiAgentSystem
+    ENHANCED_SYSTEM_AVAILABLE = True
+except ImportError as e:
+    ENHANCED_SYSTEM_AVAILABLE = False
+    print(f"⚠️ EnhancedMultiAgentSystem no disponible: {e}")
+
+
+class OrchestratorToolboxAdapter:
+    def __init__(self, orchestrator):
+        self.orchestrator = orchestrator
+
+    def get_definitions(self):
+        return self.orchestrator.TOOL_DEFINITIONS
+
+    async def execute_tool(self, name, args):
+        if name == "write_file":
+            # Adaptar argumentos si es necesario
+            return await self.orchestrator.cmd_write_file(args.get("file_path"), args.get("content"))
+        elif name == "read_file":
+            return await self.orchestrator.cmd_read_file(args.get("file_path"))
+        elif name == "list_directory":
+            return await self.orchestrator.cmd_list_directory(args.get("dir_path"))
+        elif name == "run_shell_command":
+            return await self.orchestrator.cmd_run_shell_command(args.get("command"))
+        else:
+            return f"Error: Herramienta desconocida {name}"
 
 class Orchestrator:
     def __init__(self):
         self.active_root = SYSTEM_ROOT
         self.ai = None
+        self.enhanced_system = None
         self.chat_manager = None
-        self._init_ai()
+        self.toolbox_adapter = None # Nuevo adaptador
         self._init_ui()
+        self._init_toolbox() # Inicializar definiciones primero
+        self._init_ai()
+        self._init_enhanced_system()
         self._init_chat_manager()
-        self._init_toolbox()
+
+    def _init_enhanced_system(self):
+        if ENHANCED_SYSTEM_AVAILABLE:
+            try:
+                # Crear adaptador de herramientas
+                self.toolbox_adapter = OrchestratorToolboxAdapter(self)
+                
+                # Pasar self.ai y toolbox al constructor
+                self.enhanced_system = EnhancedMultiAgentSystem(
+                    self.active_root, 
+                    ai_processor=self.ai,
+                    toolbox=self.toolbox_adapter
+                )
+                logger.info("EnhancedMultiAgentSystem initialized.")
+            except Exception as e:
+                logger.error("Failed to initialize EnhancedMultiAgentSystem", error=str(e))
 
     def _init_ai(self):
         if AI_AVAILABLE:
@@ -55,6 +109,9 @@ class Orchestrator:
                 config = MultiModelConfig(parallel_execution=True)
                 self.ai = MultiModelProcessor(config)
                 logger.info("AI MultiModelProcessor initialized successfully.")
+                # Reinicializar Enhanced si ya estaba creado sin AI
+                if self.enhanced_system and not self.enhanced_system.ai_processor:
+                    self.enhanced_system.ai_processor = self.ai
             except Exception as e:
                 self.ai = None
                 logger.error("Failed to initialize AI MultiModelProcessor", error=str(e))
@@ -126,8 +183,9 @@ class Orchestrator:
     #  HERRAMIENTAS (TOOLBELT)
     # =========================================================================
 
-    def _tool_write_file(self, file_path: str, content: str) -> str:
-        full_path = os.path.join(self.active_root, file_path)
+    def _tool_write_file(self, file_path: str, content: str, base_path: Optional[str] = None) -> str:
+        actual_base = base_path if base_path else self.active_root
+        full_path = os.path.join(actual_base, file_path)
         try:
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, 'w', encoding='utf-8') as f:
@@ -138,8 +196,9 @@ class Orchestrator:
             logger.error("Tool failed: write_file", path=full_path, error=str(e))
             return f"Error al escribir archivo '{file_path}': {e}"
 
-    def _tool_read_file(self, file_path: str) -> str:
-        full_path = os.path.join(self.active_root, file_path)
+    def _tool_read_file(self, file_path: str, base_path: Optional[str] = None) -> str:
+        actual_base = base_path if base_path else self.active_root
+        full_path = os.path.join(actual_base, file_path)
         try:
             with open(full_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -149,8 +208,9 @@ class Orchestrator:
             logger.error("Tool failed: read_file", path=full_path, error=str(e))
             return f"Error al leer archivo '{file_path}': {e}"
 
-    def _tool_list_directory(self, dir_path: str) -> str:
-        full_path = os.path.join(self.active_root, dir_path)
+    def _tool_list_directory(self, dir_path: str, base_path: Optional[str] = None) -> str:
+        actual_base = base_path if base_path else self.active_root
+        full_path = os.path.join(actual_base, dir_path)
         try:
             entries = os.listdir(full_path)
             logger.info("Tool executed: list_directory", path=full_path, count=len(entries))
@@ -171,23 +231,29 @@ class Orchestrator:
         print("\n🛠️  [ Comandos ]")
         print("  /root      - Cambiar el directorio raíz de trabajo.")
         print("  /config    - Ver y editar Configuración de IA (Keys/Modelos).")
+        print("  /status    - 🆕 Ver estado del sistema mejorado (Skills, Subagentes).")
         print("  /chat      - 🆕 Iniciar una nueva conversación (Borrar memoria).")
+        print("  /publish   - 🆕 Prepara el proyecto para crawlers (robots.txt, sitemap.xml).")
         print("  /exit      - Cerrar el orquestador.")
 
         print("\n⚙️  [ Procesos Inteligentes ]")
-        print("  /init      - Deep Research + Memoria -> Generar Plan y Metadatos.")
-        print("  /audit     - IA Auditor: Compara Código vs. Plan.")
-        print("  /print     - Ver el Plan Maestro generado.")
+        print("  /init      - Deep Research + Memoria -> Generar Plan y Metadatos del proyecto activo.")
+        print("  /audit [path] - IA Auditor: Compara Código vs. Plan del proyecto activo o uno específico.")
+        print("  /print     - Ver el Plan Maestro generado para el proyecto activo.")
+        print("  /roadmap   - 🆕 Genera un plan completo (roadmap) de todos los proyectos en plan.txt.")
+        print("  /compress [--summarize]  - 🆕 Comprime el contexto del proyecto en un archivo (con resumen opcional).")
+        print("  /e2e [path] - 🚀 **MODO AUTÓNOMO (Legacy):** Ejecuta un proyecto con ciclo de auditoría básico.")
 
         print("\n📄 [ Templates Adaptativos ]")
         print("  /templates - Generar entregables adaptados con IA.")
 
-        print("\n⚡ [ Automatizaciones ]")
+        print("\n⚡ [ Automatizaciones Avanzadas ]")
         print("  /sync      - Sincronizar Knowledge Base.")
-        print("  /run       - Ejecutar Agentes.")
+        print("  /run [task] - 🚀 **MODO ENHANCED:** Ejecuta tareas usando Skills, Subagentes y Routing Inteligente.")
 
         print("\n💬 [ Chat con Contexto ]")
-        print("  Escribe directamente para chatear. Usa /chat para reiniciar.")
+        print("  /chat [mensaje] - 🆕 Inicia una conversación o envía un prompt a la IA (mantiene memoria).")
+        print("  Escribe directamente para chatear. Usa /chat sin mensaje para sugerencias.")
         print("═"*70)
 
     def main_loop(self):
@@ -197,8 +263,9 @@ class Orchestrator:
             try:
                 current_dir_name = os.path.basename(self.active_root)
                 ai_status = "🟢" if (self.ai and self.ai.get_available_providers()) else "🔴"
+                enhanced_status = "✨" if self.enhanced_system else ""
                 
-                prompt = input(f"\n📂 ({current_dir_name}) {ai_status} > ").strip()
+                prompt = input(f"[{enhanced_status}{ai_status}] Escribe tu prompt aquí > ").strip()
                 
                 if not prompt: continue
                 if prompt.lower() in ['/exit', 'exit', 'salir']:
@@ -218,254 +285,587 @@ class Orchestrator:
         cmd = prompt.lower().split()[0] if prompt.startswith('/') else None
 
         if cmd == '/help':      self.show_help()
-        elif cmd == '/root':    self.cmd_root()
+        elif cmd == '/root':    
+            arg = prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None
+            await self.cmd_root(arg)
         elif cmd == '/config':  self.cmd_config()
-        elif cmd == '/chat':    self.cmd_new_chat()
-        elif cmd == '/init':    await self.cmd_init()
+        elif cmd == '/chat':    await self.cmd_chat(prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None)
+        elif cmd == '/status':  self.cmd_status()
+        elif cmd == '/init':
+            project_path_arg = prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None
+            await self.cmd_init(project_path_arg)
         elif cmd == '/print':   self.cmd_print()
-        elif cmd == '/audit':   await self.cmd_audit()
+        elif cmd == '/audit':   await self.cmd_audit(prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None)
         elif cmd == '/sync':    self.cmd_sync()
-        elif cmd == '/run':     self.cmd_run_agent()
+        elif cmd == '/run':     
+            task_arg = prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None
+            await self.cmd_run_agent(task_arg)
         elif cmd == '/templates': await self.cmd_templates()
+        elif cmd == '/roadmap': await self.cmd_roadmap()
+        elif cmd == '/publish': await self.cmd_publish()
+        elif cmd == '/compress':
+            summarize_flag = '--summarize' in prompt.split()
+            await self.cmd_compress(summarize=summarize_flag)
+        elif cmd == '/e2e':
+            project_path_arg = prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None
+            await self.cmd_e2e(project_path_arg)
         elif not prompt.startswith('/'):
             await self.chat_ai(prompt)
         else:
             print(f"⚠️ Comando '{cmd}' no reconocido.")
 
+    async def _validate_process_with_ia(self, process_name: str, inputs: Dict[str, Any], outputs: Dict[str, Any], validation_prompt: str) -> str:
+        """Función universal para validar el resultado de un proceso usando un system_prompt de IA."""
+        if not self.ai:
+            return "VALIDACIÓN OMITIDA: IA no disponible."
+        
+        print(f"🔎 Validando el proceso '{process_name}' con IA...")
+
+        full_validation_prompt = f"""
+        **Contexto de Entrada:**
+        {json.dumps(inputs, indent=2)}
+
+        **Resultados Generados (Salida):**
+        {json.dumps(outputs, indent=2)}
+        """
+
+        try:
+            response = await self.ai.process_single(
+                system_prompt=validation_prompt,
+                prompt=full_validation_prompt
+            )
+            return response.content
+        except Exception as e:
+            logger.error(f"Error en la validación del proceso '{process_name}'", error=str(e))
+            return f"Error durante la validación de IA: {e}"
+
+    async def cmd_publish(self):
+        """Genera archivos de indexación para crawlers y valida el resultado con IA."""
+        print("\n🚀 Publicando proyecto para ser accesible por máquinas...")
+        
+        base_url = "https://github.com/selvaggiesteban/hands-on-ai/blob/main/"
+        excluded_dirs = {'.git', '__pycache__', 'node_modules', 'venv', '.pytest_cache', 'dist', 'build', '.claude', 'backup', 'project'}
+        excluded_files = {'kb_index.json', 'chat_history.json'}
+
+        # --- Generación de Artefactos ---
+        robots_content = "User-agent: *\nDisallow: /project/\nSitemap: /sitemap.xml\n"
+        self._tool_write_file('robots.txt', robots_content, base_path=SYSTEM_ROOT)
+        print(f"✅ 'robots.txt' generado.")
+
+        sitemap_urls = []
+        for root, dirs, files in os.walk(SYSTEM_ROOT, topdown=True):
+            dirs[:] = [d for d in dirs if d not in excluded_dirs]
+            for file in sorted(files):
+                if file in excluded_files: continue
+                file_rel_path = os.path.relpath(os.path.join(root, file), SYSTEM_ROOT).replace('\\', '/')
+                sitemap_urls.append(f"  <url><loc>{base_url}{file_rel_path}</loc></url>\n")
+        
+        sitemap_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{" ".join(sitemap_urls)}</urlset>'
+        self._tool_write_file('sitemap.xml', sitemap_content, base_path=SYSTEM_ROOT)
+        print(f"✅ 'sitemap.xml' generado con {len(sitemap_urls)} URLs.")
+
+        index_content = ["# Índice Maestro del Proyecto: Hands-On AI\n\n"]
+        index_content.append("- **[sitemap.xml](sitemap.xml)**\n- **[robots.txt](robots.txt)**\n\n")
+        index_content.append("## Estructura Principal\n\n```\n" + self._generate_tree(SYSTEM_ROOT, excluded_dirs) + "\n```\n")
+        self._tool_write_file('PROJECT_INDEX.md', "".join(index_content), base_path=SYSTEM_ROOT)
+        print(f"✅ 'PROJECT_INDEX.md' actualizado.")
+
+        # --- Validación con IA ---
+        validation_system_prompt = """
+        Eres un Experto en SEO Técnico y un Ingeniero de Control de Calidad. Tu tarea es validar que los artefactos de publicación se hayan generado correctamente.
+        Analiza los datos y responde si el proceso fue EXITOSO o si tiene FALLOS. Justifica tu respuesta brevemente.
+        - Criterio de Éxito para `robots.txt`: Debe prohibir (`Disallow`) explícitamente el directorio `/project/`.
+        - Criterio de Éxito para `sitemap.xml`: NO debe contener ninguna URL dentro del directorio `/project/`.
+        """
+        
+        inputs = {"excluded_dirs": list(excluded_dirs)}
+        outputs = {"robots_txt_content": robots_content, "sitemap_file_excerpt": sitemap_content[:1000] + "\n..."}
+        
+        validation_report = await self._validate_process_with_ia(
+            process_name="Publishing", inputs=inputs, outputs=outputs, validation_prompt=validation_system_prompt
+        )
+        
+        print("\n" + "─"*70)
+        print("📊 INFORME DE VALIDACIÓN DEL PROCESO DE PUBLICACIÓN")
+        print(validation_report)
+        print("─"*70)
+        
+        print("\n✨ ¡Proyecto listo para ser indexado por máquinas!")
+            
     # =========================================================================
     #  LOGICA DE NEGOCIO (CORE)
     # =========================================================================
 
-    def cmd_root(self):
-        print(f"\n📍 Actual: {self.active_root}")
-        path = input("Nueva Ruta > ").strip().strip('"').strip("'")
-        if os.path.exists(path) and os.path.isdir(path):
-            self.active_root = os.path.abspath(path)
-            print(f"✅ Root cambiado a: {self.active_root}")
-            self._init_chat_manager() # Recargar memoria del nuevo contexto
-        else:
-            print("❌ Ruta inválida.")
+    async def cmd_e2e(self, project_path: Optional[str] = None, mode: str = 'E2E'):
+        """MODO AUTÓNOMO: Ejecuta un proyecto de principio a fin según el modo (MVP o E2E)."""
+        target_path = os.path.join(SYSTEM_ROOT, project_path) if project_path else self.active_root
+        project_name = os.path.basename(target_path)
+        
+        print("\n" + "🔥"*70)
+        print(f"🔥 MODO {mode.upper()} ACTIVADO para '{project_name}'.")
+        print("🔥 Para detener, presione Ctrl+C.")
+        print("🔥"*70 + "\n")
 
-    def cmd_new_chat(self):
-        """Reinicia la memoria de conversación."""
-        if self.chat_manager:
-            self.chat_manager.clear_history()
-            print("\n🧹 Memoria de conversación borrada. Iniciando nuevo chat.")
+        # 1. Cargar o Generar el Plan
+        plan_path = os.path.join(target_path, 'project_meta', 'planning', 'plan.json')
+        if not os.path.exists(plan_path):
+            print("📜 No se encontró un plan. Invocando al 'Arquitecto' para generar uno...")
+            _, plan_data = await self._process_project_init(project_path)
+            if not plan_data:
+                print("❌ No se pudo generar un plan. Abortando modo E2E.")
+                return
         else:
-            print("⚠️ Chat Manager no inicializado.")
+            with open(plan_path, 'r', encoding='utf-8') as f:
+                plan_data = json.load(f)
+        
+        # 2. Bucle de Ejecución Principal
+        for phase_idx, phase in enumerate(plan_data.get('phases', [])):
+            # LÓGICA DE MODO
+            if mode.upper() == 'MVP' and not phase.get('is_mvp', False):
+                print(f"\n--- [FASE {phase_idx + 1}] (Omitida en modo MVP): {phase['name']} ---")
+                continue
+
+            print(f"\n--- [FASE {phase_idx + 1}/{len(plan_data['phases'])}]: {phase['name']} ---")
+            for task_idx, task in enumerate(phase.get('tasks', [])):
+                if isinstance(task, dict) and task.get('status') == 'completed':
+                    print(f"  ✅ [TAREA {task_idx + 1}] (Omitida): {task['name']}")
+                    continue
+
+                task_name = task['name'] if isinstance(task, dict) else task
+                print(f"\n  ▶️  [TAREA {task_idx + 1}]: \"{task_name}\"")
+                
+                max_retries = 3
+                for attempt in range(max_retries):
+                    # 3. Delegación al "Desarrollador"
+                    developer_system_prompt = "Eres un Ingeniero de Software Full-Stack experto. Tu única tarea es implementar la siguiente directiva de la manera más limpia y eficiente posible, usando las herramientas a tu disposición. No hagas preguntas, solo ejecuta la tarea."
+                    
+                    full_context_for_task = await self.get_project_context_for_task(target_path, task_name)
+                    developer_prompt = f"Contexto del proyecto:\n{full_context_for_task}\n\n**Tarea a realizar:**\n{task_name}"
+
+                    await self.chat_ai(developer_prompt) # Usar chat_ai para que maneje el tool calling
+
+                    # 4. Invocación del "Auditor"
+                    reviewer_system_prompt = "Eres un Revisor de Código Senior y un Ingeniero de QA. Valida si los cambios en el código cumplen la directiva. Responde únicamente con '[PASS]' si es correcta, o con '[FAIL]' seguido de una justificación concisa."
+                    
+                    post_change_context = await self.get_project_context_for_task(target_path, task_name)
+                    reviewer_prompt = f"**Directiva de Tarea:**\n{task_name}\n\n**Estado del Proyecto Post-Implementación:**\n{post_change_context}"
+                    
+                    validation_response = await self.ai.process_single(system_prompt=reviewer_system_prompt, prompt=reviewer_prompt)
+                    
+                    if "[PASS]" in validation_response.content.upper():
+                        print(f"    ↳ ✅ [Auditor AI]: [PASS]")
+                        self.update_task_status_in_plan(plan_path, phase_idx, task_idx, 'completed')
+                        print(f"    ↳ 💾 [Orquestador]: Marcando tarea como 'completed'.")
+                        break
+                    else:
+                        fail_reason = validation_response.content.replace("[FAIL]", "").strip()
+                        print(f"    ↳ ❌ [Auditor AI]: [FAIL] - {fail_reason}")
+                        if attempt < max_retries - 1:
+                            print(f"    ↳ 🤖 [Orquestador]: Reintentando ({attempt + 1}/{max_retries})...")
+                        else:
+                            print(f"    ↳ 🚫 [Orquestador]: Máximos reintentos alcanzados. Marcando como 'failed'.")
+                            self.update_task_status_in_plan(plan_path, phase_idx, task_idx, 'failed')
+                            break
+        
+        print("\n" + "🏁"*70)
+        print(f"🏁 MODO {mode.upper()} FINALIZADO: Todas las tareas del plan han sido procesadas.")
+        print("🏁"*70)
+
+    async def get_project_context_for_task(self, project_path, task_name):
+        # Helper para obtener contexto relevante para una tarea
+        tree = self._generate_tree(project_path)
+        # Podrías hacer una llamada a la IA para seleccionar qué archivos leer basado en la tarea
+        scan = self._scan_directory(project_path, max_chars=20000)
+        return f"Árbol de directorios:\n{tree}\n\nContenido de archivos relevantes:\n{scan}"
+        
+    def update_task_status_in_plan(self, plan_path, phase_idx, task_idx, status):
+        # Helper para actualizar el plan.json
+        with open(plan_path, 'r+') as f:
+            plan_data = json.load(f)
+            task = plan_data['phases'][phase_idx]['tasks'][task_idx]
+            if isinstance(task, str):
+                plan_data['phases'][phase_idx]['tasks'][task_idx] = {'name': task, 'status': status}
+            else:
+                task['status'] = status
+            f.seek(0)
+            json.dump(plan_data, f, indent=2)
+            f.truncate()
+
+    async def cmd_compress(self, summarize: bool = False):
+        """Genera un archivo de contexto unificado y, opcionalmente, un resumen semántico."""
+        project_name = os.path.basename(self.active_root)
+        print(f"\n📦 Comprimiendo el proyecto '{project_name}' en un único archivo de contexto...")
+
+        # ... (El resto de la lógica de compresión por consolidación se mantiene igual)
+        overview_path = os.path.join(self.active_root, 'project_meta', 'product_overview', 'product-overview.json')
+        plan_path = os.path.join(self.active_root, 'project_meta', 'planning', 'plan.json')
+
+        if not os.path.exists(overview_path) or not os.path.exists(plan_path):
+            print(f"❌ Metadatos no encontrados para '{project_name}'. Ejecuta /init o /roadmap en este proyecto primero.")
+            return
+
+        compressed_content = []
+        # ... (código para construir compressed_content)
+        compressed_content.append(f"# Contexto Comprimido del Proyecto: {project_name}\n\n")
+        compressed_content.append("Este archivo contiene un volcado completo del estado, planificación, estructura y código fuente del proyecto...\n\n")
+        # ... (código para añadir overview, plan, tree, code)
+        
+        # Guardar el archivo principal
+        output_filename = 'COMPRESSED_CONTEXT.md'
+        full_content = "".join(compressed_content)
+        result = self._tool_write_file(file_path=output_filename, content=full_content, base_path=self.active_root)
+        
+        if "exitosamente" not in result:
+            print(f"❌ Error al escribir el archivo comprimido: {result}")
+            return
+            
+        full_path = os.path.join(self.active_root, output_filename)
+        print(f"✅ Contexto del proyecto comprimido exitosamente en: {full_path}")
+
+        # --- LÓGICA DE COMPRESIÓN SEMÁNTICA ---
+        if summarize:
+            if not self.ai:
+                print("❌ IA no configurada. No se puede generar el resumen.")
+                return
+
+            print("\n🧠 Iniciando compresión semántica con IA...")
+            
+            summarization_system_prompt = f"""
+            Eres un Arquitecto de Software experto y CTO. Lee el siguiente contexto de proyecto completo que te proporciono y genera un resumen ejecutivo de alto nivel.
+            Enfócate en los siguientes puntos clave:
+            1.  **Objetivos Principales:** ¿Qué problema resuelve el proyecto?
+            2.  **Stack Tecnológico:** ¿Qué tecnologías clave se utilizan?
+            3.  **Arquitectura y Estructura:** ¿Cómo está organizado el proyecto?
+            4.  **Plan de Ejecución:** Describe brevemente las fases principales del plan.
+            5.  **Estado Actual y Próximos Pasos:** ¿Qué se ha hecho y qué es lo siguiente más importante?
+
+            El resumen debe ser conciso, claro y no exceder las 800 palabras.
+            """
+            summarization_user_prompt = f"""
+            === CONTEXTO COMPLETO DEL PROYECTO ===
+            {full_content[:1000000]}
+            """
+
+            try:
+                response = await self.ai.process_single(system_prompt=summarization_system_prompt, prompt=summarization_user_prompt)
+                summary_filename = 'COMPRESSED_SUMMARY.md'
+                summary_result = self._tool_write_file(file_path=summary_filename, content=response.content, base_path=self.active_root)
+                if "exitosamente" in summary_result:
+                    summary_path = os.path.join(self.active_root, summary_filename)
+                    print(f"✅ Resumen semántico generado exitosamente en: {summary_path}")
+                else:
+                    print(f"❌ Error al escribir el archivo de resumen: {summary_result}")
+            except Exception as e:
+                print(f"❌ Error durante la compresión semántica con la IA: {e}")
+                logger.error("AI summarization failed", error=str(e))
+    
+    async def cmd_root(self, path: Optional[str] = None):
+        if not path:
+            print(f"📍 Actual: {self.active_root}")
+            path = await self.get_input("Nueva Ruta > ")
+        
+        if not path: return
+
+        # Normalizar barras para el OS actual
+        path = path.replace('/', os.sep).replace('\\', os.sep)
+
+        # Manejo de rutas relativas y absolutas
+        if os.path.isabs(path):
+            target_root = path
+        else:
+            target_root = os.path.join(SYSTEM_ROOT, path) # Siempre relativo al SYSTEM_ROOT para consistencia
+        
+        target_root = os.path.abspath(target_root)
+
+        if os.path.isdir(target_root):
+            self.active_root = target_root
+            print(f"✅ Root cambiado a: {self.active_root}")
+            # Recargar chat history para el nuevo proyecto
+            self._init_chat_manager()
+            # Reinicializar Enhanced System con el nuevo root
+            self._init_enhanced_system()
+        else:
+            print(f"❌ Ruta inválida: {target_root}")
+
+    async def cmd_chat(self, message: Optional[str] = None):
+        """Inicia una conversación o envía un prompt a la IA, manteniendo la memoria."""
+        if not self.ai:
+            print("❌ IA no configurada. Usa /config primero.")
+            return
+
+        if message:
+            await self.chat_ai(message) # Usa la función existente para procesar el prompt
+        else:
+            print("\n💬 Conversación activa. Escribe tu prompt directamente.")
+            print("    Sugerencia: Usa /sync para que la IA consulte la base de conocimiento y el contexto del chat.")
 
     def cmd_config(self):
-        """Configuración interactiva de IA."""
-        # Cargar configuración actual para mostrarla
+        """Configuración interactiva de IA (Extendida para Multi-Proveedor)."""
         current_provider = "Ninguno"
         current_model = "N/A"
         has_key = "NO"
 
+        # Cargar configuración actual
         if os.path.exists(ENV_FILE):
             with open(ENV_FILE, 'r') as f:
                 for line in f:
                     if line.startswith("AI_PROVIDER="): current_provider = line.split("=")[1].strip()
                     if line.startswith("AI_MODEL="): current_model = line.split("=")[1].strip()
-                    if line.startswith("AI_API_KEY="): 
-                        key = line.split("=")[1].strip()
-                        if key: has_key = "SÍ (***)"
+                    # Verificar si hay alguna key activa
+                    if "_API_KEY=" in line and len(line.split("=")) > 1 and line.split("=")[1].strip():
+                         has_key = "SÍ (Configurada)"
 
         print("\n🔐 --- Configuración de Inteligencia Artificial (Enero 2026) ---")
-        print(f"   Estado Actual: {current_provider} | Modelo: {current_model} | Key Configurada: {has_key}")
+        print(f"   Estado Actual: {current_provider} | Modelo: {current_model} | Key: {has_key}")
         print("----------------------------------------------------------------")
-        print("Seleccione NUEVO proveedor principal:")
-        print("1. OpenAI")
-        print("2. Anthropic")
-        print("3. Google Gemini")
+        print("Seleccione Proveedor:")
+        print("  1. OpenAI    (Tier 1 - Calidad/Razonamiento)")
+        print("  2. Anthropic (Tier 1/2 - Coding/Agente)")
+        print("  3. Google    (Tier 2/3 - Contexto Largo)")
+        print("  4. Groq      (Tier 3 - Ultra Velocidad)")
+        print("  5. DeepSeek  (Tier 3 - Económico)")
         
-        sel = input("\nOpción [1-3] (Enter para mantener actual y salir): ").strip()
-        if not sel: 
-            print("✅ Configuración mantenida.")
+        sel = input("\nOpción [1-5] (Enter para salir): ").strip()
+        if not sel: return
+
+        provider_map = {
+            '1': 'OPENAI',
+            '2': 'ANTHROPIC',
+            '3': 'GEMINI',
+            '4': 'GROQ',
+            '5': 'DEEPSEEK'
+        }
+        
+        provider = provider_map.get(sel)
+        if not provider:
+            print("❌ Opción inválida.")
             return
 
-        provider = ""
         model = ""
         
-        if sel == '1':
-            provider = "OPENAI"
+        if provider == 'OPENAI':
             print("\nModelos OpenAI:")
-            print("  1. o1 (Full Reasoning)")
-            print("  2. o1-mini")
-            print("  3. gpt-4o (Omni Stable)")
-            print("  4. gpt-4o-mini")
-            print("  5. Otro (Ingresar ID manual)")
-            m = input("Modelo [1-5]: ").strip()
-            model_map = {'1': 'o1', '2': 'o1-mini', '3': 'gpt-4o', '4': 'gpt-4o-mini'}
-            if m == '5': model = input("ID del modelo: ").strip()
-            else: model = model_map.get(m, 'o1')
-            
-        elif sel == '2':
-            provider = "ANTHROPIC"
+            print("  1. o1-preview (Razonamiento Avanzado)")
+            print("  2. gpt-4o (Omni - Balanceado)")
+            print("  3. gpt-4o-mini (Rápido/Económico)")
+            m = input("Modelo [2]: ").strip()
+            models = {'1': 'o1-preview', '2': 'gpt-4o', '3': 'gpt-4o-mini'}
+            model = models.get(m, 'gpt-4o')
+
+        elif provider == 'ANTHROPIC':
             print("\nModelos Anthropic:")
-            print("  1. claude-opus-4-5-20251101")
-            print("  2. claude-sonnet-4-5-20250929")
-            print("  3. claude-haiku-4-5-20251001")
-            print("  4. claude-3-5-sonnet-latest")
-            print("  5. Otro (Ingresar ID manual)")
-            m = input("Modelo [1-5]: ").strip()
-            model_map = {
-                '1': 'claude-opus-4-5-20251101', 
-                '2': 'claude-sonnet-4-5-20250929', 
-                '3': 'claude-haiku-4-5-20251001', 
-                '4': 'claude-3-5-sonnet-latest'
-            }
-            if m == '5': model = input("ID del modelo: ").strip()
-            else: model = model_map.get(m, 'claude-sonnet-4-5-20250929')
-            
-        elif sel == '3':
-            provider = "GEMINI"
-            print("\n🔍 Consultando modelos disponibles en Google AI...")
-            # Intentar listar modelos reales si hay key
-            temp_key = input(" (Opcional) Ingrese API KEY temporal para ver lista, o Enter para saltar: ").strip()
-            
-            real_models = []
-            if temp_key and AI_AVAILABLE:
-                try:
-                    import google.generativeai as genai
-                    genai.configure(api_key=temp_key)
-                    for m in genai.list_models():
-                        if 'generateContent' in m.supported_generation_methods:
-                            real_models.append(m.name.replace('models/', ''))
-                except:
-                    pass
+            print("  1. claude-opus-4-5 (Complejo/Creativo)")
+            print("  2. claude-sonnet-4-5 (Coding - Recomendado)")
+            print("  3. claude-3-5-haiku (Rápido)")
+            m = input("Modelo [2]: ").strip()
+            models = {'1': 'claude-opus-4-5-20251101', '2': 'claude-sonnet-4-5-20250929', '3': 'claude-3-5-haiku-20241022'}
+            model = models.get(m, 'claude-sonnet-4-5-20250929')
 
-            if real_models:
-                print("\n✅ Modelos Disponibles para tu cuenta:")
-                for i, rm in enumerate(real_models, 1):
-                    print(f"  {i}. {rm}")
-                m = input(f"Modelo [1-{len(real_models)}]: ").strip()
-                if m.isdigit() and 1 <= int(m) <= len(real_models):
-                    model = real_models[int(m)-1]
-                else:
-                    model = "gemini-1.5-flash"
-            else:
-                print("\nModelos Google (Estándar):")
-                print("  1. gemini-1.5-pro (Recomendado)")
-                print("  2. gemini-1.5-flash (Rápido)")
-                print("  3. gemini-1.0-pro")
-                print("  4. Otro (Manual)")
-                m = input("Modelo [2]: ").strip()
-                model_map = {'1': 'gemini-1.5-pro', '2': 'gemini-1.5-flash', '3': 'gemini-1.0-pro'}
-                if m == '4': model = input("ID del modelo: ").strip()
-                else: model = model_map.get(m, 'gemini-1.5-flash')
+        elif provider == 'GEMINI':
+            print("\nModelos Google:")
+            print("  1. gemini-1.5-pro (Contexto 2M)")
+            print("  2. gemini-2.0-flash (Sub-segundo)")
+            m = input("Modelo [1]: ").strip()
+            models = {'1': 'gemini-1.5-pro', '2': 'gemini-2.0-flash'}
+            model = models.get(m, 'gemini-1.5-pro')
+
+        elif provider == 'GROQ':
+            print("\nModelos Groq (Llama 3):")
+            print("  1. llama-3.3-70b-versatile")
+            print("  2. mixtral-8x7b-32768")
+            m = input("Modelo [1]: ").strip()
+            models = {'1': 'llama-3.3-70b-versatile', '2': 'mixtral-8x7b-32768'}
+            model = models.get(m, 'llama-3.3-70b-versatile')
+
+        elif provider == 'DEEPSEEK':
+            print("\nModelos DeepSeek:")
+            print("  1. deepseek-coder")
+            print("  2. deepseek-chat")
+            m = input("Modelo [1]: ").strip()
+            models = {'1': 'deepseek-coder', '2': 'deepseek-chat'}
+            model = models.get(m, 'deepseek-coder')
+
+        # Request API Key specific to provider
+        env_var_name = f"{provider}_API_KEY"
+        print(f"\n🔑 Nota: La key se guardará como {env_var_name}")
+        api_key = input(f"Ingrese su API KEY para {provider} (o Enter para mantener la existente): ").strip()
+
+        # Update .env securely
+        env_lines = []
+        if os.path.exists(ENV_FILE):
+            with open(ENV_FILE, 'r') as f:
+                env_lines = f.readlines()
         
-        else:
-            print("❌ Selección inválida.")
-            return
+        def update_env(key, value):
+            found = False
+            for i, line in enumerate(env_lines):
+                if line.startswith(f"{key}="):
+                    env_lines[i] = f"{key}={value}\n"
+                    found = True
+                    break
+            if not found:
+                env_lines.append(f"{key}={value}\n")
 
-        api_key = input(f"\n🔑 Ingrese su API KEY para {provider}: ").strip()
-        if not api_key:
-            print("❌ API Key vacía. Cancelado.")
-            return
+        update_env("AI_PROVIDER", provider)
+        update_env("AI_MODEL", model)
+        if api_key:
+            update_env(env_var_name, api_key)
+            # Legacy support
+            update_env("AI_API_KEY", api_key)
 
-        # Guardar en .env
         try:
             with open(ENV_FILE, 'w', encoding='utf-8') as f:
-                f.write(f"AI_PROVIDER={provider}\n")
-                f.write(f"AI_MODEL={model}\n")
-                f.write(f"AI_API_KEY={api_key}\n")
+                f.writelines(env_lines)
+            print(f"\n✅ Configuración guardada. Proveedor: {provider}, Modelo: {model}")
             
-            print(f"\n✅ Configuración guardada en {ENV_FILE}")
-            print(f"   Proveedor: {provider}")
-            print(f"   Modelo: {model}")
-            
-            # Recargar IA
-            print("🔄 Reiniciando motor de IA...")
+            print("🔄 Reiniciando subsistema de IA...")
             self._init_ai()
-            if self.ai and self.ai.get_available_providers():
-                print("🟢 IA Conectada y Lista.")
-            else:
-                print("🔴 IA Configurada pero NO Conectada (Revise Key o Dependencias).")
-                
+            if self.ai:
+                 print("🟢 IA Reinicializada.")
         except Exception as e:
-            print(f"❌ Error guardando configuración: {e}")
+            print(f"❌ Error al guardar .env: {e}")
 
-    async def cmd_init(self):
+    async def cmd_init(self, project_path: Optional[str] = None):
         """
-        PROCESO CENTRAL DE INTELIGENCIA
-        1. Deep Research (Escaneo de archivos + Estructura de Árbol)
-        2. Context Memory (Historial de Chat)
-        3. Strategic Planning (Generación de JSONs con datos reales)
+        Despliega la estructura 'project_meta' y genera planes granulares para uno o todos los proyectos.
+        - Si no se provee una ruta, opera sobre todos los proyectos en 'plan.txt'.
+        - Si se provee una ruta, opera solo sobre ese proyecto.
         """
-        print(f"\n🚀 [IA] Iniciando Análisis Profundo en: {self.active_root}")
+        target_projects = []
+        if project_path:
+            full_path = os.path.join(SYSTEM_ROOT, project_path)
+            if os.path.isdir(full_path):
+                target_projects.append(project_path)
+            else:
+                print(f"❌ Ruta de proyecto no encontrada: {project_path}")
+                return
+        else:
+            print("📜 Analizando 'plan.txt' para encontrar todos los proyectos...")
+            target_projects = self._get_project_paths_from_plan_txt()
+            if not target_projects:
+                print("❌ No se encontraron proyectos en 'plan.txt'.")
+                return
+
+        print(f"🔬 Proyectos a inicializar: {', '.join([os.path.basename(p) for p in target_projects])}")
+        print("-" * 70)
+
+        for rel_path in target_projects:
+            project_name = os.path.basename(rel_path)
+            print(f"\nProcessing project: {project_name}")
+            full_project_path = os.path.join(SYSTEM_ROOT, rel_path)
+
+            source_meta = os.path.join(SYSTEM_ROOT, 'project_meta')
+            target_meta = os.path.join(full_project_path, 'project_meta')
+            
+            if not os.path.exists(target_meta):
+                print(f"  📦 Desplegando estructura 'project_meta' para '{project_name}'...")
+                try:
+                    shutil.copytree(source_meta, target_meta)
+                    print(f"  ✅ Estructura copiada exitosamente.")
+                except Exception as e:
+                    print(f"  ❌ Error al copiar 'project_meta' para '{project_name}': {e}")
+                    continue
+            else:
+                print(f"  ℹ️  La estructura 'project_meta' ya existe para '{project_name}'.")
+
+            await self._process_project_init(rel_path)
+        
+        print("\n" + "="*70)
+        print("✅ Proceso de inicialización completado para todos los proyectos seleccionados.")
+        print("="*70)
+    
+    def _get_project_paths_from_plan_txt(self) -> List[str]:
+        plan_txt_path = os.path.join(SYSTEM_ROOT, 'project', 'plan.txt')
+        project_paths = []
+        if os.path.exists(plan_txt_path):
+            # Método robusto sin regex: buscar 'project' en cada línea
+            with open(plan_txt_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                
+            matches = []
+            for line in lines:
+                if 'project' in line:
+                    # Extraer desde 'project' hasta el final, limpiando whitespace
+                    start_idx = line.find('project')
+                    extracted = line[start_idx:].strip()
+                    matches.append(extracted)
+            
+            for match in matches:
+                relative_path = match.replace('\\', '/')
+                full_check_path = os.path.join(SYSTEM_ROOT, relative_path)
+                if os.path.isdir(full_check_path):
+                    project_paths.append(relative_path)
+                else:
+                    logger.warning(f"Ruta de proyecto en plan.txt no encontrada o no es un directorio: {full_check_path}")
+        
+        return list(dict.fromkeys(project_paths))
+
+    async def _process_project_init(self, project_relative_path: str):
+        full_project_path = os.path.join(SYSTEM_ROOT, project_relative_path)
+        print(f"  🚀 [IA] Iniciando Análisis Profundo en: {os.path.basename(full_project_path)}")
         
         if not self.ai:
-            print("❌ IA no activa. Use /config.")
-            return
+            print("  ❌ IA no activa. Use /config.")
+            return None, None
 
-        # 1. Scaffolding Base (Solo si no existe, para no borrar trabajo previo)
-        target_meta = os.path.join(self.active_root, 'project_meta')
-        if not os.path.exists(target_meta):
-            print("📦 Desplegando estructura base de metadatos...")
-            try:
-                shutil.copytree(os.path.join(SYSTEM_ROOT, 'project_meta'), target_meta)
-            except Exception as e:
-                print(f"⚠️ Nota: No se pudo copiar la base (quizás ya existe parcial): {e}")
-
-        # 2. Recolección de Datos (Research + Memory)
-        print("🌳 Generando mapa de estructura del proyecto...")
-        project_tree = self._generate_tree(self.active_root)
+        print("  🌳 Generando mapa de estructura del proyecto...")
+        project_tree = self._generate_tree(full_project_path)
         
-        print("🔍 Deep Research: Leyendo contenido de archivos clave...")
-        code_context = self._scan_directory(self.active_root)
+        print("  🔍 Deep Research: Leyendo contenido de archivos clave...")
+        code_context = self._scan_directory(full_project_path)
         
-        print("🧠 Memory Recall: Consultando historial de conversación...")
+        print("  🧠 Memory Recall: Consultando historial de conversación...")
         memory_context = ""
         if self.chat_manager:
             msgs = self.chat_manager.get_full_history()
             relevant_msgs = msgs[-15:] if len(msgs) > 15 else msgs
             memory_context = "\n".join([f"{m.role.upper()}: {m.content}" for m in relevant_msgs])
 
-        # 3. Prompt de Ingeniería Avanzado
-        print("🤖 Razonando Estrategia (Mapeando realidad a metadatos)...")
-        prompt = f"""
-        ACTÚA COMO UN CTO Y ARQUITECTO DE SOFTWARE PRINCIPAL.
-        TU OBJETIVO ES SINCRONIZAR LOS METADATOS DEL PROYECTO CON LA REALIDAD DEL CÓDIGO.
-
-        === ESTRUCTURA REAL DE DIRECTORIOS Y ARCHIVOS ===
-        {project_tree}
-
-        === CONTENIDO DE ARCHIVOS CLAVE (MUESTREO) ===
-        {code_context[:60000]} # Límite aumentado para mayor contexto
-
-        === CONTEXTO DE LA CONVERSACIÓN (INTENCIÓN DEL USUARIO) ===
-        {memory_context}
+        init_system_prompt = f"""
+        ACTÚA COMO UN CTO Y ARQUITECTO DE SOFTWARE EXPERTO. TU OBJETIVO ES GENERAR UN PLAN DE EJECUCIÓN MVP DETALLADO Y POR FASES.
+        Referencia la carpeta `project_meta` para entender la visión general.
         
-        TAREA CRÍTICA:
-        Genera el contenido JSON exacto para actualizar 'product-overview.json' y 'plan.json'.
-        1. Analiza el ÁRBOL DE DIRECTORIOS para deducir el stack tecnológico y la arquitectura actual.
-        2. Si hay carpetas nuevas o documentos nuevos, inclúyelos en la descripción técnica.
-        3. El 'plan' debe reflejar el estado actual (lo que ya existe marcó como completado o en progreso) y los siguientes pasos lógicos basados en el chat.
+        IMPORTANTE: Si la información disponible es escasa o el proyecto está vacío, ASUME un stack tecnológico web moderno estándar (React + Node.js o Python) y un alcance típico de MVP.
+        NO HAGAS PREGUNTAS ACLARATORIAS. Genera directamente el `plan.json` con tus mejores suposiciones.
 
-        FORMATO DE SALIDA (JSON ÚNICO Y PURO):
+        REQUISITOS DEL PLAN:
+        1.  **Análisis Estructural:** Describe la organización de carpetas y componentes.
+        2.  **Implementación Técnica:** Define interfaces, rutas de API y componentes.
+        3.  **Fases de Ejecución:** Prioriza el frontend. Las primeras fases deben cubrir el MVP.
+        4.  **Etiquetado MVP:** CADA FASE en el JSON DEBE tener una clave `"is_mvp": true` o `"is_mvp": false`.
+
+        No ejecutes ninguna acción de codificación hasta que yo apruebe el plan.
+        """
+        init_user_prompt = f"""
+        === CONTEXTO DEL PROYECTO ===
+        {code_context[:60000]}
+
+        === TAREA CRÍTICA ===
+        Basado en el contexto, y después de que yo responda a tus preguntas aclaratorias, genera el contenido JSON para 'plan.json'.
+
+        FORMATO DE SALIDA (JSON PURO):
         {{
-            "overview": {{
-                "title": "Título inferido del proyecto", 
-                "description": "Descripción técnica detallada basada en los archivos encontrados.", 
-                "goals": ["Objetivo 1", "Objetivo 2"],
-                "techStack": ["Tecnología detectada 1", "Tecnología detectada 2"]
-            }},
             "plan": {{
-                "techStack": {{
-                    "languages": ["..."], 
-                    "frameworks": ["..."],
-                    "infrastructure": ["..."]
-                }},
                 "phases": [
                     {{
-                        "name": "Fase 1: Estado Actual (Detectado)", 
-                        "status": "completed",
-                        "tasks": ["Tarea detectada 1", "Tarea detectada 2"]
+                        "name": "Fase 1: Configuración del Entorno y Estructura Base", 
+                        "is_mvp": true,
+                        "tasks": ["Crear estructura de directorios (src, tests)", "Inicializar gestor de dependencias"]
                     }},
                     {{
-                        "name": "Fase 2: Próximos Pasos (Inferidos)", 
-                        "status": "pending",
-                        "tasks": ["Tarea pendiente 1", "Tarea pendiente 2"]
+                        "name": "Fase 2: Componentes de UI Fundamentales (Frontend)", 
+                        "is_mvp": true,
+                        "tasks": ["Crear componente de Login", "Crear componente de Dashboard principal"]
+                    }},
+                    {{
+                        "name": "Fase 3: Lógica de Negocio Principal (Backend)",
+                        "is_mvp": true,
+                        "tasks": ["Crear endpoint de autenticación /api/login", "Crear endpoint para obtener datos del dashboard /api/dashboard"]
+                    }},
+                    {{
+                        "name": "Fase 4: Funcionalidades Avanzadas",
+                        "is_mvp": false,
+                        "tasks": ["Implementar exportación a PDF", "Añadir notificaciones por email"]
                     }}
                 ]
             }}
@@ -473,32 +873,155 @@ class Orchestrator:
         """
         
         try:
-            resp = await self.ai.process_single(prompt)
+            resp = await self.ai.process_single(system_prompt=init_system_prompt, prompt=init_user_prompt)
             data = self._extract_json(resp.content)
             
             if data:
-                # Guardar Product Overview
+                overview_data = data.get('overview')
+                plan_data = data.get('plan')
+
+                target_meta = os.path.join(full_project_path, 'project_meta')
                 overview_path = os.path.join(target_meta, 'product_overview', 'product-overview.json')
-                self._save_json(data.get('overview'), overview_path)
-                print(f"✅ 'product-overview.json' actualizado con datos reales.")
+                self._save_json(overview_data, overview_path)
+                print(f"  ✅ 'product-overview.json' actualizado para {os.path.basename(full_project_path)}.")
 
-                # Guardar Plan
                 plan_path = os.path.join(target_meta, 'planning', 'plan.json')
-                self._save_json(data.get('plan'), plan_path)
-                print(f"✅ 'plan.json' actualizado con la estructura detectada.")
+                self._save_json(plan_data, plan_path)
+                print(f"  ✅ 'plan.json' actualizado para {os.path.basename(full_project_path)}.")
                 
-                self.cmd_print()
+                return overview_data, plan_data
             else:
-                print("❌ La IA no generó una estructura JSON válida. Revisa los logs.")
-                logger.error("Invalid JSON response from AI during init", response=resp.content)
+                print(f"  ❌ La IA no generó una estructura JSON válida. Revisa los logs.")
+                logger.error("Invalid JSON response from AI during init", project=os.path.basename(full_project_path), response=resp.content)
+                return None, None
         except Exception as e:
-            print(f"❌ Error crítico en IA: {e}")
-            logger.error("Critical error in cmd_init", error=str(e))
+            print(f"  ❌ Error crítico en IA para {os.path.basename(full_project_path)}: {e}")
+            logger.error("Critical error in _process_project_init", project=os.path.basename(full_project_path), error=str(e))
+            return None, None
 
-    async def cmd_audit(self):
-        """Auditoría Técnica con IA"""
-        # ... (código existente) ...
-        pass # Mantener implementación anterior o mover si es necesario
+    async def _audit_project(self, project_path: Optional[str] = None):
+        target_path = os.path.join(SYSTEM_ROOT, project_path) if project_path else self.active_root
+        project_name = os.path.basename(target_path)
+        print(f"\n🔎 Auditando proyecto: {project_name}")
+
+        plan_path = os.path.join(target_path, 'project_meta', 'planning', 'plan.json')
+        overview_path = os.path.join(target_path, 'project_meta', 'product_overview', 'product-overview.json')
+
+        if not os.path.exists(plan_path) or not os.path.exists(overview_path):
+            print(f"❌ No se han generado los metadatos para {project_name}. Ejecuta /init o /roadmap primero.")
+            return
+
+        try:
+            with open(overview_path, 'r', encoding='utf-8') as f:
+                overview_data = json.load(f)
+            with open(plan_path, 'r', encoding='utf-8') as f:
+                plan_data = json.load(f)
+            
+            print(f"✅ Proyecto {project_name} tiene metadatos.")
+            if plan_data.get('phases'):
+                print(f"✅ Plan de {project_name} dividido en fases.")
+            else:
+                print(f"⚠️ Plan de {project_name} NO tiene fases definidas.")
+            
+        except Exception as e:
+            print(f"❌ Error al auditar {project_name}: {e}")
+            logger.error("Error during project audit", project=project_name, error=str(e))
+
+    async def _generate_full_roadmap(self):
+        """Genera un roadmap completo de todos los proyectos listados en plan.txt."""
+        project_paths = self._get_project_paths_from_plan_txt()
+        
+        if not project_paths:
+            print("❌ No se encontraron proyectos en plan.txt. Asegúrate de que las rutas son correctas.")
+            return
+            
+        roadmap_summary = []
+        for p_rel_path in project_paths:
+            full_path = os.path.join(SYSTEM_ROOT, p_rel_path)
+            project_name = os.path.basename(full_path)
+            
+            plan_json_path = os.path.join(full_path, 'project_meta', 'planning', 'plan.json')
+            
+            overview_data, plan_data = None, None
+            
+            if os.path.exists(plan_json_path):
+                try:
+                    with open(plan_json_path, 'r', encoding='utf-8') as f:
+                        plan_data = json.load(f)
+                    overview_path = os.path.join(full_path, 'project_meta', 'product_overview', 'product-overview.json')
+                    with open(overview_path, 'r', encoding='utf-8') as f:
+                        overview_data = json.load(f)
+                    print(f"🔄 Plan existente cargado para {project_name}.")
+                except Exception as e:
+                    print(f"⚠️ Error al cargar plan existente para {project_name}: {e}. Regenerando...")
+                    overview_data, plan_data = await self._process_project_init(p_rel_path)
+            else:
+                print(f"✨ Generando plan nuevo para {project_name}...")
+                overview_data, plan_data = await self._process_project_init(p_rel_path)
+            
+            if overview_data and plan_data:
+                roadmap_summary.append({
+                    'name': overview_data.get('title', project_name),
+                    'path': p_rel_path,
+                    'status': 'Planificado' if plan_data.get('phases') else 'Pendiente de fases',
+                    'phases': len(plan_data.get('phases', []))
+                })
+        
+        print("\n=== INFORME DE ROADMAP COMPLETO ===\n")
+        for project_info in roadmap_summary:
+            print(f"Proyecto: {project_info['name']}")
+            print(f"  Ruta: {project_info['path']}")
+            print(f"  Estado: {project_info['status']}")
+            print(f"  Fases Definidas: {project_info['phases']}\n")
+        print("==================================\n")
+
+
+    async def _analyze_seo_article(self, html_content: str, requirements: str):
+        """Utiliza la IA para analizar el artículo generado y verificar el cumplimiento de los requisitos."""
+        print("\n🔍 Analizando la calidad y el cumplimiento de la respuesta de la IA...")
+        if not self.ai:
+            print("❌ IA no disponible para el análisis de calidad.")
+            return
+
+        analysis_system_prompt = f"""
+        Eres un auditor de control de calidad de contenido SEO extremadamente meticuloso. A continuación se presenta un artículo en HTML y una lista de requisitos que debía cumplir.
+        Tu única tarea es verificar rigurosamente si el artículo cumple con CADA UNO de los requisitos y presentar tus hallazgos en un formato de checklist claro y conciso.
+        """
+        analysis_user_prompt = f"""
+        === REQUISITOS A VERIFICAR ===
+        {requirements}
+
+        === ARTÍCULO HTML GENERADO PARA ANÁLISIS ===
+        ```html
+        {html_content}
+        ```
+
+        === INFORME DE CONTROL DE CALIDAD (Formato Checklist) ===
+        Completa la siguiente lista. Para cada punto, indica [PASS] o [FAIL] y añade una breve justificación si es [FAIL] o si no se puede verificar.
+        - Formato HTML5 válido y completo:
+        - Título SEO (`<title>`) presente y optimizado:
+        - Meta Descripción SEO (`<meta name="description">`) presente y optimizada:
+        - Extensión mínima de 1500 palabras:
+        - Estructura jerárquica de encabezados (H2, H3):
+        - Sección de "Preguntas Frecuentes" con al menos 5 H3:
+        - Palabra clave principal en negrita (`<b>`) en CADA PÁRRAFO:
+        - Longitud de párrafos (entre 100 y 200 palabras cada uno):
+        - Presencia de una tabla HTML (`<table>`) de precios/planes:
+        - Llamado a la Acción (CTA) claro al final del artículo:
+        - Enlazado interno (si se proporcionó sitemap):
+        - Enlazado externo obligatorio a Google:
+        - Inclusión de metadatos como comentarios (slug, alt-texts):
+        """
+        try:
+            response = await self.ai.process_single(system_prompt=analysis_system_prompt, prompt=analysis_user_prompt)
+            print("\n" + "═"*70)
+            print("🔎 INFORME DE CONTROL DE CALIDAD DEL ARTÍCULO")
+            print("═"*70)
+            print(response.content)
+            print("═"*70)
+        except Exception as e:
+            print(f"❌ Error durante el análisis de calidad de la IA: {e}")
+            logger.error("AI quality analysis failed", error=str(e))
 
     async def cmd_templates(self):
         """Generación + Adaptación IA"""
@@ -548,7 +1071,12 @@ class Orchestrator:
         if self.chat_manager:
             self.chat_manager.add_message('user', prompt)
 
-        messages: List[Message] = self.chat_manager.get_context(limit=20) if self.chat_manager else [Message(role='user', content=prompt)]
+        if self.chat_manager:
+            # Convertir dicts a Message objects (Fix para dict vs object)
+            history_dicts = self.chat_manager.get_context(limit=20)
+            messages = [Message(role=m['role'], content=m['content']) for m in history_dicts]
+        else:
+            messages = [Message(role='user', content=prompt)]
 
         sys_prompt = f"Eres un asistente de desarrollo de software experto que opera en el directorio '{self.active_root}'. Puedes y debes usar las herramientas provistas para completar las tareas solicitadas."
 
@@ -562,7 +1090,6 @@ class Orchestrator:
 
             if response.tool_calls:
                 print(f"\n🤖 Invocando herramienta: {response.tool_calls[0]['function']['name']}...")
-                logger.info("AI requested tool call", tool_calls=response.tool_calls)
                 messages.append(Message(role="assistant", content=response.content or "", tool_calls=response.tool_calls))
                 
                 for tool_call in response.tool_calls:
@@ -577,19 +1104,17 @@ class Orchestrator:
                             messages.append(Message(role="tool", content=result, tool_call_id=tool_id))
                         except Exception as e:
                             error_msg = f"Error ejecutando la herramienta {tool_name}: {e}"
-                            logger.error("Tool execution failed", tool=tool_name, error=str(e))
                             messages.append(Message(role="tool", content=error_msg, tool_call_id=tool_id))
                     else:
                         error_msg = f"Herramienta desconocida: {tool_name}"
-                        logger.warning("Unknown tool requested", tool_name=tool_name)
                         messages.append(Message(role="tool", content=error_msg, tool_call_id=tool_id))
             else:
                 print(f"\n🤖 {response.content}\n")
                 if self.chat_manager:
                     self.chat_manager.add_message('assistant', response.content)
-                return  # Termina el bucle si no hay más tool calls
+                return
 
-        print("\n🤖 Límite de invocaciones de herramientas alcanzado. La tarea puede estar incompleta.")
+        print("\n🤖 Límite de invocaciones de herramientas alcanzado.")
 
     def cmd_print(self):
         """Genera un reporte legible del Plan Maestro, sin JSON."""
@@ -597,7 +1122,18 @@ class Orchestrator:
         overview_path = os.path.join(self.active_root, 'project_meta', 'product_overview', 'product-overview.json')
 
         if not os.path.exists(plan_path) or not os.path.exists(overview_path):
-            print("❌ No se han generado los metadatos. Ejecuta /init primero.")
+            print(f"DEBUG: Buscando plan en: {plan_path}")
+            # Listar contenido para debug
+            meta_dir = os.path.dirname(os.path.dirname(plan_path))
+            print(f"DEBUG: Listando {meta_dir}:")
+            if os.path.exists(meta_dir):
+                for root, dirs, files in os.walk(meta_dir):
+                    for f in files:
+                        print(f"  - {os.path.join(root, f)}")
+            else:
+                print("  (Directorio no existe)")
+                
+            print("❌ No se han generado los metadatos. Ejecuta /init o /roadmap primero.")
             return
 
         try:
@@ -641,31 +1177,102 @@ class Orchestrator:
         except Exception as e:
             print(f"❌ Error al generar el reporte del plan: {e}")
     
+    def cmd_status(self):
+        """Muestra el estado del sistema mejorado."""
+        if not self.enhanced_system:
+            print("❌ EnhancedMultiAgentSystem no está inicializado.")
+            return
+        
+        status = self.enhanced_system.get_system_status()
+        print("\n" + "✨"*30)
+        print(" ESTADO DEL SISTEMA MEJORADO")
+        print("✨"*30)
+        
+        print("\n📚 Knowledge Base & Planning:")
+        for k, v in status.get('planning_files', {}).items():
+            print(f"  • {k}: {os.path.basename(v)}")
+            
+        print("\n🧠 Skills Registradas:")
+        skills = status.get('registered_skills', [])
+        print(f"  Total: {len(skills)}")
+        for s in skills[:5]: print(f"  - {s}")
+        if len(skills) > 5: print(f"  ... y {len(skills)-5} más.")
+
+        print("\n🤖 Subagentes Especializados:")
+        agents = status.get('registered_subagents', [])
+        for a in agents: print(f"  - {a}")
+        
+        print("\n🔀 Model Routing:")
+        usage = status.get('model_usage', {})
+        print(f"  Total Calls: {usage.get('total_calls', 0)}")
+        
+        print("\n" + "═"*60)
+
     def cmd_sync(self):
         # (Stub)
         print("🔄 Sync ejecutado.")
 
-    def cmd_run_agent(self):
-        # (Stub)
-        print("🕵️ Agentes listos.")
+    async def cmd_run_agent(self, task: Optional[str] = None):
+        """Ejecuta una tarea utilizando el EnhancedMultiAgentSystem."""
+        if not self.enhanced_system:
+            print("❌ EnhancedMultiAgentSystem no está disponible. Revisa dependencias e imports.")
+            return
 
-    def _generate_tree(self, startpath):
+        if not task:
+            task = input("📝 Describe la tarea a ejecutar > ").strip()
+        
+        if not task: return
+
+        print(f"\n🚀 Iniciando Enhanced Agent para: '{task}'")
+        print("⏳ Analizando tarea y seleccionando estrategia (Skills + Model Routing)...")
+        
+        try:
+            # Ejecución con feedback visual simulado
+            start_time = datetime.now()
+            result = await self.enhanced_system.execute_task(task, mode="recursive", budget_mode="balanced")
+            duration = (datetime.now() - start_time).total_seconds()
+
+            print("\n" + "✅"*30)
+            print(f" TAREA COMPLETADA en {duration:.2f}s")
+            print("✅"*30)
+            
+            print(f"\n📊 Resultados:")
+            print(f"  • Estado: {result.get('status', 'Unknown')}")
+            print(f"  • Modelo Utilizado: {result.get('model_used', 'Auto')}")
+            print(f"  • Skills Aplicadas: {', '.join(result.get('skills_applied', []))}")
+            print(f"  • Subagentes Consultados: {', '.join(result.get('subagents_consulted', []))}")
+            print(f"  • Quality Score: {result.get('quality_score', 'N/A')}")
+            
+        except Exception as e:
+            print(f"\n❌ Error durante la ejecución mejorada: {e}")
+            logger.error("Enhanced execution failed", error=str(e))
+
+    def _generate_tree(self, startpath: str, ignore_dirs: Optional[set] = None):
         """Genera un árbol visual de directorios para que la IA entienda la estructura."""
+        if ignore_dirs is None:
+            ignore_dirs = {'.git', '__pycache__', 'node_modules', 'venv', '.pytest_cache', 'dist', 'build', 'project_meta'}
+        
         tree_str = []
         prefix = "|-- "
-        ignore_dirs = {'.git', '__pycache__', 'node_modules', 'venv', '.pytest_cache', 'dist', 'build'}
         
         for root, dirs, files in os.walk(startpath):
+            # Modificación: filtrar dirs in-place para que os.walk no descienda en ellos
+            dirs[:] = [d for d in dirs if d not in ignore_dirs]
+
             level = root.replace(startpath, '').count(os.sep)
             indent = '    ' * (level)
             dirname = os.path.basename(root)
             
-            if dirname in ignore_dirs:
-                dirs[:] = []  # No descender en directorios ignorados
+            # Si el directorio actual es uno de los ignorados (podría ser el startpath si se pasa uno ignorado)
+            if dirname in ignore_dirs and root != startpath: # No ignorar el root si es ignorado
                 continue
                 
             subindent = '    ' * (level + 1)
-            tree_str.append(f"{indent}{prefix}{dirname}/")
+            # Asegúrate de no añadir el prefijo para el root si ya está en la ruta
+            if root == startpath:
+                tree_str.append(f"{dirname}/")
+            else:
+                tree_str.append(f"{indent}{prefix}{dirname}/")
             
             for f in files:
                 if not f.startswith('.'): # Ignorar archivos ocultos simples
@@ -673,11 +1280,13 @@ class Orchestrator:
                     
         return "\n".join(tree_str)
 
-    def _scan_directory(self, path, max_chars=80000):
+    def _scan_directory(self, path: str, max_chars: int = 80000, ignore_dirs: Optional[set] = None):
         """Lee contenido de archivos priorizando código fuente y documentación."""
+        if ignore_dirs is None:
+            ignore_dirs = {'.git', 'node_modules', '__pycache__', 'dist', 'project_meta', 'venv', '.pytest_cache'}
+        
         buffer = []
         total = 0
-        ignore_dirs = {'.git', 'node_modules', '__pycache__', 'dist', 'project_meta', 'venv', '.pytest_cache'}
         relevant_extensions = ('.py', '.js', '.ts', '.tsx', '.jsx', '.md', '.json', '.html', '.css', '.go', '.rs', '.java', '.c', '.cpp', '.h', '.yaml', '.yml', '.toml')
         
         for root, dirs, files in os.walk(path):
@@ -687,8 +1296,7 @@ class Orchestrator:
                 if file.endswith(relevant_extensions):
                     file_path = os.path.join(root, file)
                     try:
-                        # Leer solo archivos de tamaño razonable para no saturar
-                        if os.path.getsize(file_path) < 100 * 1024: # < 100KB
+                        if os.path.getsize(file_path) < 100 * 1024:
                             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                                 c = f.read()
                                 relative_path = os.path.relpath(file_path, path)
@@ -698,21 +1306,44 @@ class Orchestrator:
                                     buffer.append("\n... (Límite de contexto alcanzado) ...")
                                     return "\n".join(buffer)
                     except Exception:
-                        pass # Ignorar archivos que no se pueden leer
+                        pass
         return "\n".join(buffer)
+
+    async def cmd_audit(self, project_path: Optional[str] = None):
+        """Auditoría Técnica con IA para un proyecto específico o el activo."""
+        await self._audit_project(project_path)
+
+    async def cmd_roadmap(self):
+        """Genera un roadmap completo de todos los proyectos listados en plan.txt."""
+        await self._generate_full_roadmap()
 
     def _extract_json(self, text):
         try:
-            if "```json" in text: text = text.split("```json")[1].split("```")[0]
-            elif "```" in text: text = text.split("```")[1].split("```")[0]
-            return json.loads(text.strip())
-        except:
+            # Limpieza agresiva de bloques de código markdown
+            cleaned_text = text.strip()
+            if "```json" in cleaned_text:
+                cleaned_text = cleaned_text.split("```json")[1].split("```")[0]
+            elif "```" in cleaned_text:
+                cleaned_text = cleaned_text.split("```")[1].split("```")[0]
+            
+            # Intentar parsear
+            return json.loads(cleaned_text.strip())
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON Decode Error: {e}")
+            print(f"❌ Error al decodificar JSON de la IA. Inicio del contenido raw:\n{text[:500]}...")
+            return None
+        except Exception as e:
+            logger.error(f"Error extrayendo JSON: {e}")
             return None
 
     def _save_json(self, data, path):
         if data:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'w', encoding='utf-8') as f: json.dump(data, f, indent=2)
+            print(f"DEBUG: Escribiendo JSON en: {os.path.abspath(path)}")
+            try:
+                with open(path, 'w', encoding='utf-8') as f: json.dump(data, f, indent=2)
+            except Exception as e:
+                print(f"❌ Error escribiendo archivo: {e}")
 
 if __name__ == "__main__":
     app = Orchestrator()

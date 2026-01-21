@@ -49,6 +49,7 @@ class Message:
     role: str  # 'user', 'assistant', 'system', 'tool'
     content: str
     tool_call_id: Optional[str] = None
+    tool_calls: Optional[List[Dict[str, Any]]] = None
 
 
 class BaseProvider(ABC):

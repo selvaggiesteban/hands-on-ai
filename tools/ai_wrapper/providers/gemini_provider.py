@@ -54,7 +54,7 @@ class GeminiProvider(BaseProvider):
         messages: List[Message],
         system_prompt: Optional[str] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
-        max_tokens: int = 4096,
+        max_tokens: int = 8192,
         temperature: float = 0.7
     ) -> AIResponse:
         """Genera respuesta usando el nuevo SDK de Gemini."""

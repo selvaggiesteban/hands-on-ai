@@ -191,7 +191,8 @@ class MultiModelProcessor:
         prompt: str = None,
         messages: List[Message] = None,
         system_prompt: Optional[str] = None,
-        provider: Optional[str] = None
+        provider: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None
     ) -> AIResponse:
         """Procesa con un solo proveedor (usando round-robin si no se especifica)."""
         can_proceed, msg = self.limits.can_proceed()
@@ -224,7 +225,7 @@ class MultiModelProcessor:
                 raise Exception("No hay proveedores disponibles (verifique API Key)")
 
         prov = self.providers[selected]
-        response = await prov.generate(final_messages, system_prompt)
+        response = await prov.generate(final_messages, system_prompt, tools=tools)
 
         self.limits.record_usage(response.tokens_total, response.cost_usd)
         return response

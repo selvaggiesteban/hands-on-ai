@@ -48,6 +48,7 @@ except ImportError:
 try:
     sys.path.append(SYSTEM_ROOT)
     from integrations.enhanced_multi_agent_system import EnhancedMultiAgentSystem
+    from tools.security.policy_enforcer import SecurityPolicyEnforcer
     ENHANCED_SYSTEM_AVAILABLE = True
 except ImportError as e:
     ENHANCED_SYSTEM_AVAILABLE = False
@@ -81,8 +82,19 @@ class Orchestrator:
         self.enhanced_system = None
         self.chat_manager = None
         self.toolbox_adapter = None # Nuevo adaptador
+        self.policy_enforcer = None # Enforcer de seguridad
+        
+        # Inicializar Enforcer si es posible (antes de cargar contexto para tenerlo listo)
+        try:
+            from tools.security.policy_enforcer import SecurityPolicyEnforcer
+            self.policy_enforcer = SecurityPolicyEnforcer() # Carga threat-model.yaml automáticamente
+        except Exception as e:
+            logger.error(f"Failed to init PolicyEnforcer: {e}")
+
         self._init_ui()
         self._init_toolbox() # Inicializar definiciones primero
+        self._load_context_files() # Cargar Reglas y Prompts
+        self._scan_dependencies()  # Escanear Entorno
         self._init_ai()
         self._init_enhanced_system()
         self._init_chat_manager()
@@ -102,6 +114,62 @@ class Orchestrator:
                 logger.info("EnhancedMultiAgentSystem initialized.")
             except Exception as e:
                 logger.error("Failed to initialize EnhancedMultiAgentSystem", error=str(e))
+
+    def _load_context_files(self):
+        """Carga reglas críticas y librería de prompts en memoria."""
+        self.context_rules = ""
+        self.prompt_library = {}
+        
+        # 1. Cargar Reglas (07-Rules.md)
+        rules_path = os.path.join(self.active_root, 'knowledge_base', 'setup', '07-Rules.md')
+        if os.path.exists(rules_path):
+            try:
+                with open(rules_path, 'r', encoding='utf-8') as f:
+                    self.context_rules = f"\n=== CRITICAL PROJECT RULES (MUST FOLLOW) ===\n{f.read()}\n==========================================\n"
+                logger.info("Rules loaded from 07-Rules.md")
+            except Exception as e:
+                logger.error(f"Error loading rules: {e}")
+
+        # 2. Cargar Prompt Library
+        prompts_path = os.path.join(self.active_root, 'project_meta', 'ai-context', 'prompt-library.json')
+        if os.path.exists(prompts_path):
+            try:
+                with open(prompts_path, 'r', encoding='utf-8') as f:
+                    self.prompt_library = json.load(f)
+                logger.info("Prompt library loaded.")
+            except Exception as e:
+                logger.error(f"Error loading prompt library: {e}")
+
+    def _scan_dependencies(self):
+        """Escanea requirements.txt y package.json para dar contexto real a la IA."""
+        self.dependencies_context = ""
+        deps_summary = []
+        
+        # Python
+        req_path = os.path.join(self.active_root, 'requirements.txt')
+        if os.path.exists(req_path):
+            try:
+                with open(req_path, 'r') as f:
+                    reqs = [l.strip() for l in f.readlines() if l.strip() and not l.startswith('#')]
+                    deps_summary.append(f"Python Packages: {', '.join(reqs[:20])}...")
+            except: pass
+            
+        # Node
+        pkg_path = os.path.join(self.active_root, 'package.json')
+        if os.path.exists(pkg_path):
+            try:
+                with open(pkg_path, 'r') as f:
+                    pkg = json.load(f)
+                    deps = list(pkg.get('dependencies', {}).keys())
+                    dev_deps = list(pkg.get('devDependencies', {}).keys())
+                    deps_summary.append(f"Node Dependencies: {', '.join(deps)}")
+                    deps_summary.append(f"Node DevDependencies: {', '.join(dev_deps)}")
+            except: pass
+            
+        if deps_summary:
+            self.dependencies_context = "\n=== DETECTED PROJECT DEPENDENCIES ===\n" + "\n".join(deps_summary) + "\n=====================================\n"
+        else:
+            self.dependencies_context = ""
 
     def _init_ai(self):
         if AI_AVAILABLE:
@@ -125,9 +193,66 @@ class Orchestrator:
     def _init_ui(self):
         os.system('cls' if os.name == 'nt' else 'clear')
 
+    def _discover_script_tools(self):
+        """Escanea la carpeta tools/ y convierte scripts python en herramientas."""
+        tools_path = os.path.join(self.active_root, 'tools')
+        if not os.path.exists(tools_path): return
+
+        scripts = glob.glob(os.path.join(tools_path, "*.py"))
+        for script in scripts:
+            name = os.path.basename(script)
+            if name == "__init__.py": continue
+            
+            tool_name = f"tool_{name.replace('.py', '')}"
+            rel_path = os.path.relpath(script, self.active_root).replace('\\', '/')
+            
+            # Definición dinámica
+            tool_def = {
+                "type": "function",
+                "function": {
+                    "name": tool_name,
+                    "description": f"Ejecuta el script de utilidad '{name}'. Usa esto para tareas específicas del proyecto.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "args": {"type": "string", "description": "Argumentos opcionales para el script (ej: '--check')"}
+                        },
+                        "required": []
+                    }
+                }
+            }
+            
+            # Wrapper de ejecución
+            def make_wrapper(script_path):
+                return lambda args="": self._run_script_wrapper(script_path, args)
+            
+            self.TOOL_DEFINITIONS.append(tool_def)
+            self.AVAILABLE_TOOLS[tool_name] = make_wrapper(rel_path)
+            logger.info(f"Discovered tool: {tool_name}")
+
+    def _run_script_wrapper(self, script_path, args):
+        """Ejecuta un script python y captura su salida."""
+        cmd = f"python {script_path} {args}"
+        return self._tool_run_shell_command(cmd)
+
     def _init_toolbox(self):
         """Define el cinturón de herramientas del agente."""
         self.TOOL_DEFINITIONS = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "consult_expert",
+                    "description": "Delega una tarea compleja a un agente especializado del Sistema Mejorado. Úsalo para tareas de Arquitectura, Seguridad, Review o Coding complejo que requieran planificación.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "task_description": {"type": "string", "description": "Descripción detallada de la tarea."},
+                            "expert_type": {"type": "string", "description": "Tipo de experto (opcional): 'security', 'frontend', 'backend', 'planner'."}
+                        },
+                        "required": ["task_description"]
+                    }
+                }
+            },
             {
                 "type": "function",
                 "function": {
@@ -170,22 +295,85 @@ class Orchestrator:
                         "required": ["dir_path"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "run_shell_command",
+                    "description": "Ejecuta un comando de shell en el sistema. Úsalo con precaución.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "command": {"type": "string", "description": "Comando a ejecutar."}
+                        },
+                        "required": ["command"]
+                    }
+                }
             }
         ]
         self.AVAILABLE_TOOLS: Dict[str, Callable] = {
             "write_file": self._tool_write_file,
             "read_file": self._tool_read_file,
-            "list_directory": self._tool_list_directory
+            "list_directory": self._tool_list_directory,
+            "run_shell_command": self._tool_run_shell_command,
+            "consult_expert": self._tool_consult_expert
         }
+        
+        # Auto-descubrimiento
+        self._discover_script_tools()
+        
         logger.info("Toolbox initialized.", tools=list(self.AVAILABLE_TOOLS.keys()))
 
     # =========================================================================
     #  HERRAMIENTAS (TOOLBELT)
     # =========================================================================
 
+    async def _tool_consult_expert(self, task_description: str, expert_type: str = "auto") -> str:
+        """Puente hacia el EnhancedMultiAgentSystem."""
+        if not self.enhanced_system:
+            return "Error: El sistema experto (EnhancedMultiAgentSystem) no está disponible."
+            
+        logger.info(f"Delegating to expert ({expert_type}): {task_description[:50]}...")
+        print(f"\n🧠 ACTIVANDO MODO EXPERTO ({expert_type})...")
+        print(f"   Tarea: {task_description}")
+        
+        try:
+            # Ejecución real asíncrona usando el sistema mejorado
+            result = await self.enhanced_system.execute_task(
+                task=task_description,
+                mode="recursive" # Usar modo recursivo por defecto para máxima autonomía
+            )
+            
+            output = f"=== REPORTE DEL SISTEMA EXPERTO ===\n"
+            output += f"Estado: {result.get('status')}\n"
+            output += f"Modelo Usado: {result.get('model_used')}\n"
+            output += f"Skills: {', '.join(result.get('skills_applied', []))}\n"
+            output += f"Output Final:\n{result.get('output', 'Ver archivos generados.')}\n"
+            
+            return output
+        except Exception as e:
+            logger.error(f"Expert system failed: {e}")
+            return f"Error crítico en el sistema experto: {e}"
+
     def _tool_write_file(self, file_path: str, content: str, base_path: Optional[str] = None) -> str:
         actual_base = base_path if base_path else self.active_root
         full_path = os.path.join(actual_base, file_path)
+        
+        # 🛡️ SECURITY CHECK
+        if self.policy_enforcer:
+            ext = os.path.splitext(file_path)[1].lower()
+            lang_map = {'.js': 'javascript', '.ts': 'typescript', '.py': 'python', '.go': 'go'}
+            language = lang_map.get(ext, 'text')
+            
+            validation = self.policy_enforcer.validate_against_plan(content, language)
+            
+            if not validation.get('compliant', True):
+                # Bloquear escritura si hay violaciones críticas
+                violations = [v['message'] for v in validation.get('violations', [])]
+                warning_msg = f"⛔ BLOQUEO DE SEGURIDAD: El código viola las políticas del proyecto.\nViolaciones: {', '.join(violations)}"
+                logger.warning(f"Security blocked write to {file_path}: {violations}")
+                return warning_msg
+
         try:
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, 'w', encoding='utf-8') as f:
@@ -218,6 +406,27 @@ class Orchestrator:
         except Exception as e:
             logger.error("Tool failed: list_directory", path=full_path, error=str(e))
             return f"Error al listar directorio '{dir_path}': {e}"
+
+    def _tool_run_shell_command(self, command: str) -> str:
+        """Ejecuta un comando de shell y retorna stdout/stderr."""
+        print(f"Executing shell command: {command}")
+        try:
+            result = subprocess.run(
+                command, 
+                shell=True, 
+                capture_output=True, 
+                text=True, 
+                cwd=self.active_root,
+                encoding='utf-8' # Forzar UTF-8
+            )
+            output = result.stdout
+            if result.stderr:
+                output += f"\n[STDERR]\n{result.stderr}"
+            logger.info("Tool executed: run_shell_command", command=command[:20])
+            return output
+        except Exception as e:
+            logger.error("Tool failed: run_shell_command", command=command, error=str(e))
+            return f"Error executing shell command: {e}"
             
     # =========================================================================
     #  INTERFAZ Y MENÚS (UI/UX)
@@ -247,13 +456,10 @@ class Orchestrator:
         print("\n📄 [ Templates Adaptativos ]")
         print("  /templates - Generar entregables adaptados con IA.")
 
-        print("\n⚡ [ Automatizaciones Avanzadas ]")
-        print("  /sync      - Sincronizar Knowledge Base.")
-        print("  /run [task] - 🚀 **MODO ENHANCED:** Ejecuta tareas usando Skills, Subagentes y Routing Inteligente.")
-
-        print("\n💬 [ Chat con Contexto ]")
-        print("  /chat [mensaje] - 🆕 Inicia una conversación o envía un prompt a la IA (mantiene memoria).")
-        print("  Escribe directamente para chatear. Usa /chat sin mensaje para sugerencias.")
+        print("\n💬 [ Interacción Unificada ]")
+        print("  Escribe cualquier tarea o pregunta. El sistema decidirá automáticamente si usar")
+        print("  respuestas rápidas o desplegar agentes especializados (Enhanced System).")
+        print("  Ejemplo: 'Crea una API de login' activará automáticamente a los agentes de desarrollo.")
         print("═"*70)
 
     def main_loop(self):
@@ -297,9 +503,6 @@ class Orchestrator:
         elif cmd == '/print':   self.cmd_print()
         elif cmd == '/audit':   await self.cmd_audit(prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None)
         elif cmd == '/sync':    self.cmd_sync()
-        elif cmd == '/run':     
-            task_arg = prompt.split(' ', 1)[1] if len(prompt.split(' ', 1)) > 1 else None
-            await self.cmd_run_agent(task_arg)
         elif cmd == '/templates': await self.cmd_templates()
         elif cmd == '/roadmap': await self.cmd_roadmap()
         elif cmd == '/publish': await self.cmd_publish()
@@ -312,7 +515,10 @@ class Orchestrator:
         elif not prompt.startswith('/'):
             await self.chat_ai(prompt)
         else:
-            print(f"⚠️ Comando '{cmd}' no reconocido.")
+            # Si es un comando desconocido, intentar pasarlo como chat también, 
+            # asumiendo que el usuario quizás quería decir algo natural.
+            print(f"⚠️ Comando '{cmd}' no reconocido. Procesando como texto natural...")
+            await self.chat_ai(prompt)
 
     async def _validate_process_with_ia(self, process_name: str, inputs: Dict[str, Any], outputs: Dict[str, Any], validation_prompt: str) -> str:
         """Función universal para validar el resultado de un proceso usando un system_prompt de IA."""
@@ -1078,7 +1284,24 @@ class Orchestrator:
         else:
             messages = [Message(role='user', content=prompt)]
 
-        sys_prompt = f"Eres un asistente de desarrollo de software experto que opera en el directorio '{self.active_root}'. Puedes y debes usar las herramientas provistas para completar las tareas solicitadas."
+        # SYSTEM PROMPT UNIFICADO Y ENRIQUECIDO
+        sys_prompt = f"""Eres un ORQUESTADOR DE DESARROLLO DE SOFTWARE experto operando en '{self.active_root}'.
+        
+        {self.context_rules}
+        
+        {self.dependencies_context}
+        
+        TU MISIÓN:
+        1. Para preguntas simples o lecturas de archivos: Responde directamente o usa las herramientas básicas (read_file, list_directory).
+        2. Para TAREAS DE DESARROLLO (codificar, planificar, debuguear, refactorizar, crear features): 
+           **DEBES USAR LA HERRAMIENTA `consult_expert` INMEDIATAMENTE.**
+           No intentes resolver tareas complejas tú solo con herramientas básicas. Delega al Sistema Experto.
+        
+        Ejemplos:
+        - User: "¿Qué hay en src?" -> Tú: Usas `list_directory`.
+        - User: "Crea un componente de Login" -> Tú: Usas `consult_expert(task_description="Crear componente Login...")`.
+        - User: "Arregla el bug en auth" -> Tú: Usas `consult_expert(task_description="Debuguear auth...", expert_type="backend")`.
+        """
 
         MAX_TOOL_CALLS = 5
         for _ in range(MAX_TOOL_CALLS):
@@ -1100,8 +1323,12 @@ class Orchestrator:
                     if tool_name in self.AVAILABLE_TOOLS:
                         tool_function = self.AVAILABLE_TOOLS[tool_name]
                         try:
+                            # Ejecución Dual: Soportar tanto herramientas síncronas como asíncronas
                             result = tool_function(**tool_args)
-                            messages.append(Message(role="tool", content=result, tool_call_id=tool_id))
+                            if asyncio.iscoroutine(result):
+                                result = await result
+                                
+                            messages.append(Message(role="tool", content=str(result), tool_call_id=tool_id))
                         except Exception as e:
                             error_msg = f"Error ejecutando la herramienta {tool_name}: {e}"
                             messages.append(Message(role="tool", content=error_msg, tool_call_id=tool_id))

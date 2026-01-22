@@ -65,7 +65,8 @@ class PlanningRAG:
                 "index_patterns": [
                     "knowledge_base/**/*.md",
                     "project_meta/**/*.json",
-                    "project_meta/**/*.md"
+                    "project_meta/**/*.md",
+                    "external/**/*.md"
                 ]
             }
         }
@@ -116,7 +117,24 @@ class PlanningRAG:
         """Obtiene lista de archivos a indexar."""
         files = []
 
-        index_patterns = self.config.get('indexing', {}).get('index_patterns', [])
+        # Default patterns if config is empty, combining docs and code
+        default_patterns = [
+            "knowledge_base/**/*.md",
+            "project_meta/**/*.json",
+            "project_meta/**/*.md",
+            "external/**/*.md",
+            "src/**/*.ts",
+            "src/**/*.js",
+            "src/**/*.py",
+            "src/**/*.tsx",
+            "tools/**/*.py"
+        ]
+        
+        index_patterns = self.config.get('indexing', {}).get('index_patterns', default_patterns)
+        
+        # Ensure external and code patterns are present if config loaded from file didn't have them
+        if "external/**/*.md" not in index_patterns:
+             index_patterns.extend(["external/**/*.md", "src/**/*.py", "src/**/*.ts", "tools/**/*.py"])
 
         for pattern in index_patterns:
             full_pattern = os.path.join(self.kb_root, pattern)
@@ -135,27 +153,47 @@ class PlanningRAG:
 
     def _process_document(self, file_path: str) -> List[Dict]:
         """
-        Procesa un documento y lo divide en chunks.
-
-        Args:
-            file_path: Ruta al documento
-
-        Returns:
-            Lista de chunks con metadata
+        Procesa un documento.
+        ESTRATEGIA OPCIÓN B: 
+        - Archivos de documentación (.md, .txt, .json de meta): Indexado completo (Chunking).
+        - Archivos de código (.py, .js, .ts, etc.): Solo indexado de estructura/metadata (No chunks de contenido).
         """
         # Read file
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Error reading {file_path}: {e}")
+            return []
 
         # Extract metadata
         metadata = self._extract_metadata(file_path, content)
+        
+        # Determinar estrategia por extensión
+        ext = os.path.splitext(file_path)[1].lower()
+        full_index_extensions = {'.md', '.txt', '.json', '.yaml', '.yml'}
+        
+        chunks = []
+        
+        if ext in full_index_extensions:
+            # Estrategia A: Indexación completa para documentación y configuración
+            chunks = self._chunk_document(content, file_path)
+        else:
+            # Estrategia B: Indexación ligera para código (Solo referencia)
+            # Creamos un único chunk "stub" que sirve para encontrar el archivo, pero no gasta tokens en el contenido
+            summary = f"Code file: {os.path.basename(file_path)}\nPath: {file_path}\nSize: {len(content)} bytes"
+            chunks.append({
+                'text': summary, # El texto buscable es solo la ruta y nombre
+                'start': 0,
+                'end': len(summary),
+                'chunk_id': 0,
+                'metadata': metadata
+            })
 
-        # Chunk document
-        chunks = self._chunk_document(content, file_path)
-
-        # Add metadata to each chunk
+        # Add metadata to each chunk if not added by strategy B logic
         for chunk in chunks:
-            chunk['metadata'] = metadata
+            if 'metadata' not in chunk:
+                chunk['metadata'] = metadata
 
         # Store in index
         doc_id = self._generate_doc_id(file_path)

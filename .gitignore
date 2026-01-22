@@ -59,3 +59,27 @@ logs/
 # Project specific
 project/
 kb_index.json
+
+# AI System Data (RAG & Memory)
+data/chroma_db/
+data/rag_metrics.json
+chat_history.json
+.planning/progress.md
+.planning/findings.md
+.planning/task_plan.md
+# Mantener .planning/ como carpeta, pero ignorar su contenido dinámico si se desea resetear
+# O ignorar toda la carpeta si se genera al vuelo:
+#.planning/
+
+# External Providers (Si decidimos no subirlos y que se descarguen)
+# external/providers/
+
+# Generated Reports
+project_meta/reports/*.md
+# Keep final validation report if useful, or ignore all
+project_meta/planning/plan.json
+project_meta/product_overview/product-overview.json
+
+# Temporary files
+COMPRESSED_CONTEXT.md
+COMPRESSED_SUMMARY.md

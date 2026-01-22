@@ -5,6 +5,8 @@ Enforces security policies defined in plan.json
 
 import json
 import re
+import os
+import yaml
 from typing import Dict, List, Any
 from datetime import datetime
 
@@ -14,14 +16,32 @@ class SecurityPolicyEnforcer:
     Enforcer de políticas de seguridad del proyecto.
     """
 
-    def __init__(self, security_policies: Dict):
+    def __init__(self, security_policies: Dict = None):
         """
-        Inicializa el enforcer.
+        Inicializa el enforcer. Si no se dan políticas, intenta cargar threat-model.yaml.
+        """
+        self.security_policies = security_policies or {}
+        
+        if not self.security_policies:
+            self._load_threat_model()
 
-        Args:
-            security_policies: Políticas de seguridad del plan.json
-        """
-        self.security_policies = security_policies
+    def _load_threat_model(self):
+        """Intenta cargar el modelo de amenazas desde project_meta."""
+        # Asumimos que estamos corriendo desde la raíz o que podemos encontrar el archivo
+        # Buscamos hacia arriba hasta encontrar project_meta
+        base_path = os.getcwd()
+        threat_path = os.path.join(base_path, 'project_meta', 'security', 'threat-model.yaml')
+        
+        if os.path.exists(threat_path):
+            try:
+                with open(threat_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                    # Mapear threat model a security policies simples
+                    self.security_policies['auth_strategy'] = "JWT" # Default extraction logic
+                    # Aquí se podría hacer un mapeo más complejo
+                    print(f"Loaded threat model from {threat_path}")
+            except Exception as e:
+                print(f"Error loading threat model: {e}")
 
     def validate_against_plan(self, code: str, language: str) -> Dict:
         """

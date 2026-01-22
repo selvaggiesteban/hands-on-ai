@@ -494,135 +494,36 @@ class SkillRegistry:
         self._load_builtin_skills()
 
     def _load_builtin_skills(self):
-        """Carga skills builtin del sistema."""
-        # Skill: Test-Driven Development (de obra/superpowers)
-        self.register(Skill(
-            name="test-driven-development",
-            description="Enforce RED-GREEN-REFACTOR cycles for all code changes",
-            instructions="""
-When implementing any feature or fix:
-1. RED: Write a failing test first that defines the expected behavior
-2. GREEN: Write the minimum code to make the test pass
-3. REFACTOR: Improve the code while keeping tests green
+        """Carga skills builtin e importadas del sistema."""
+        
+        # 1. Cargar Core Skills (Framework)
+        try:
+            sys.path.append(os.path.join(SYSTEM_ROOT, 'tools', 'skills'))
+            from core_skills import CORE_SKILLS
+            for skill_id, skill_config in CORE_SKILLS.items():
+                self.register(Skill(
+                    name=skill_config.name,
+                    description=skill_config.description,
+                    instructions=skill_config.instructions,
+                    triggers=skill_config.triggers
+                ))
+        except ImportError as e:
+            print(f"⚠️ Could not load core_skills: {e}")
 
-Never write production code without a failing test first.
-            """,
-            examples=[
-                "Write test for user authentication before implementing login",
-                "Create API endpoint test before building the route handler"
-            ],
-            guidelines=[
-                "Tests should be small and focused",
-                "One assertion per test when possible",
-                "Use descriptive test names"
-            ],
-            triggers=["implement", "code", "feature", "fix", "bug"]
-        ))
+        # 2. Cargar skills importadas automáticamente (Anthropic/Superpowers)
+        try:
+            from imported_skills import IMPORTED_SKILLS
+            for skill_id, skill_config in IMPORTED_SKILLS.items():
+                self.register(Skill(
+                    name=skill_config.name,
+                    description=skill_config.description,
+                    instructions=skill_config.instructions,
+                    triggers=skill_config.triggers
+                ))
+        except ImportError as e:
+            print(f"⚠️ Could not load imported_skills: {e}")
 
-        # Skill: Systematic Debugging (de obra/superpowers)
-        self.register(Skill(
-            name="systematic-debugging",
-            description="4-phase root cause analysis for debugging",
-            instructions="""
-Follow these 4 phases for any debugging task:
-
-1. REPRODUCE: Confirm the bug exists and create minimal reproduction
-2. ISOLATE: Binary search to find exact location of failure
-3. ANALYZE: Understand WHY the code behaves incorrectly
-4. FIX: Apply minimal change to fix root cause, not symptoms
-
-Document each phase in progress.md before moving to next.
-            """,
-            examples=[
-                "Bug: Login fails silently -> Phase 1: Create test case that fails",
-                "Phase 2: Found issue in auth middleware line 45"
-            ],
-            guidelines=[
-                "Never guess - always verify hypotheses",
-                "Log findings to prevent repeated investigation",
-                "Fix root cause, not symptoms"
-            ],
-            triggers=["debug", "bug", "error", "fix", "issue", "broken"]
-        ))
-
-        # Skill: Brainstorming (de obra/superpowers)
-        self.register(Skill(
-            name="brainstorming",
-            description="Conversational design refinement before coding",
-            instructions="""
-Before writing any code, engage in design dialogue:
-
-1. Ask clarifying questions about requirements
-2. Propose 2-3 alternative approaches
-3. Discuss trade-offs of each approach
-4. Get explicit approval before proceeding
-
-Never assume - always clarify ambiguous requirements.
-            """,
-            examples=[
-                "Should the cart persist across sessions?",
-                "Do we need real-time inventory updates?"
-            ],
-            guidelines=[
-                "Minimum 3 clarifying questions for new features",
-                "Document decisions in findings.md",
-                "Prefer simple solutions over complex ones"
-            ],
-            triggers=["design", "plan", "new feature", "implement", "create"]
-        ))
-
-        # Skill: Writing Plans (de obra/superpowers)
-        self.register(Skill(
-            name="writing-plans",
-            description="Break complex work into bite-sized tasks",
-            instructions="""
-For any complex task, create a detailed plan:
-
-1. Break into tasks of 2-5 minutes each
-2. Include exact file paths for each task
-3. Add verification steps after each task
-4. Order tasks by dependencies
-
-Update task_plan.md with the breakdown before starting.
-            """,
-            examples=[
-                "Task 1: Create ProductCard component in src/components/ProductCard.tsx",
-                "Verify: npm run test -- ProductCard"
-            ],
-            guidelines=[
-                "Each task should be independently verifiable",
-                "Include rollback instructions for risky changes",
-                "Mark tasks complete immediately after finishing"
-            ],
-            triggers=["complex", "large", "multiple files", "refactor", "migration"]
-        ))
-
-        # Skill: Code Review (custom)
-        self.register(Skill(
-            name="code-review",
-            description="Systematic code review checklist",
-            instructions="""
-Review code against these criteria:
-
-1. CORRECTNESS: Does it do what it's supposed to?
-2. SECURITY: Any vulnerabilities? (OWASP Top 10)
-3. PERFORMANCE: Any obvious bottlenecks?
-4. READABILITY: Is it clear and maintainable?
-5. TESTS: Are there adequate tests?
-
-Provide specific line references for issues.
-            """,
-            examples=[
-                "Line 45: SQL injection vulnerability - use parameterized queries",
-                "Line 120-150: Consider extracting to separate function"
-            ],
-            guidelines=[
-                "Be specific - reference exact lines",
-                "Suggest fixes, not just problems",
-                "Prioritize security issues"
-            ],
-            triggers=["review", "check", "audit", "verify"]
-        ))
+        # 3. Skills legacy hardcoded (Si quedan)
 
     def register(self, skill: Skill):
         """Registra una nueva skill."""
@@ -727,8 +628,25 @@ class SubagentRegistry:
         self._register_builtin_subagents()
 
     def _register_builtin_subagents(self):
-        """Registra subagentes predefinidos."""
+        """Registra subagentes predefinidos e importados."""
+        
+        # 1. Cargar subagentes importados automáticamente
+        try:
+            # Añadir path para encontrar el módulo generado
+            sys.path.append(os.path.join(SYSTEM_ROOT, 'tools', 'agents'))
+            from imported_subagents import IMPORTED_SUBAGENTS
+            
+            for agent_enum, agent_config in IMPORTED_SUBAGENTS.items():
+                # Convertir al formato interno si es necesario o registrar directamente
+                # Hack: Usamos el enum del importado como clave, o creamos una dinámica
+                # Por simplicidad, inyectamos en el diccionario interno usando el nombre string
+                self.subagents[agent_config.type] = agent_config
+                # print(f"Loaded imported agent: {agent_config.type}")
+                
+        except ImportError as e:
+            print(f"⚠️ Could not load imported_subagents: {e}")
 
+        # 2. Registrar subagentes hardcoded (Legacy/Core)
         # Frontend Developer
         self.register(SubagentConfig(
             type=SubagentType.FRONTEND_DEVELOPER,
@@ -888,22 +806,27 @@ class AutonomousRecursiveDevelopment:
 
     # ... (métodos intermedios)
 
-    async def develop(self, task: str, context: Dict = None) -> Dict:
+    async def develop(self, task: str, context: Dict = None, skills: List[Skill] = None) -> Dict:
         """
         Ejecuta desarrollo autónomo recursivo hasta alcanzar calidad.
         """
         self.planning.add_task(task)
         self.planning.log_progress(f"Starting autonomous development: {task[:50]}...")
 
-        # ... (lógica de develop que borré)
+        # Generar contexto de skills
+        skill_context = ""
+        if skills:
+            skill_context = "# Active Skills for this Task\n"
+            for s in skills:
+                skill_context += f"## {s.name}\n{s.instructions}\n\n"
 
         result = { "status": "in_progress", "iterations": [] }
         current_output = ""
         for i in range(1, self.max_iterations + 1):
-            iteration_result = await self._execute_iteration_real(task, current_output, "Default skill context", [], context)
+            iteration_result = await self._execute_iteration_real(task, current_output, skill_context, [], context)
             current_output = iteration_result["output"]
             quality = iteration_result["quality_score"]
-            result["iterations"].append({"quality": quality})
+            result["iterations"].append({"quality": quality, "output": current_output})
             if quality >= self.quality_threshold:
                 result["status"] = "completed"
                 break
@@ -1177,7 +1100,7 @@ class EnhancedMultiAgentSystem:
 
         # Ejecutar según modo
         if mode == "recursive":
-            result = await self.recursive_dev.develop(task)
+            result = await self.recursive_dev.develop(task, skills=skills)
         else:
             result = await self._execute_standard(task, skills, subagents, model)
 

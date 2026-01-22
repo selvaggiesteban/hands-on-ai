@@ -14,10 +14,30 @@ class AIScaffolder:
     Scaffolder AI que genera estructura completa desde plan.json
     """
 
-    def __init__(self):
+    def __init__(self, ai_processor=None):
         self.generated_files = []
+        self.ai = ai_processor
 
-    def generate_from_plan(self, plan_json: Dict, scope: str = "full") -> Dict:
+    async def _generate_content_with_ai(self, file_path: str, description: str, context: str = "") -> str:
+        """Genera el contenido real del archivo usando IA."""
+        if not self.ai:
+            return f"// Content for {file_path}\n// Description: {description}\n// (AI not connected)"
+            
+        prompt = f"""
+        ACT AS AN EXPERT DEVELOPER.
+        Task: Generate the code for the file '{file_path}'.
+        Description: {description}
+        Context: {context}
+        
+        Return ONLY the code for the file. No markdown blocks, no explanations.
+        """
+        try:
+            response = await self.ai.process_single(prompt=prompt)
+            return response.content
+        except Exception as e:
+            return f"// Error generating content: {e}"
+
+    async def generate_from_plan(self, plan_json: Dict, scope: str = "full") -> Dict:
         """
         Genera estructura completa desde plan.json.
 

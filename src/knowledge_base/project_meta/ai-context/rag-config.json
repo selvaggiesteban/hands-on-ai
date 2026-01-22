@@ -1,0 +1,194 @@
+{
+  "version": "1.0.0",
+  "schema_version": "1.0",
+  "description": "RAG (Retrieval-Augmented Generation) configuration for knowledge management",
+  "vector_store": {
+    "provider": "chroma",
+    "alternatives": ["pinecone", "qdrant", "weaviate", "faiss"],
+    "configuration": {
+      "persist_directory": "./data/chroma_db",
+      "collection_name": "hands_on_ai_knowledge",
+      "distance_metric": "cosine",
+      "enable_persistence": true
+    }
+  },
+  "embedding_model": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "alternatives": [
+      {
+        "provider": "cohere",
+        "model": "embed-english-v3.0",
+        "dimensions": 1024
+      },
+      {
+        "provider": "sentence-transformers",
+        "model": "all-MiniLM-L6-v2",
+        "dimensions": 384,
+        "notes": "Local, free alternative"
+      }
+    ],
+    "batch_size": 100,
+    "rate_limit_per_minute": 3000
+  },
+  "chunking_strategy": {
+    "strategy": "semantic",
+    "description": "Split documents based on semantic boundaries rather than fixed sizes",
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_chunk_size": 100,
+    "max_chunk_size": 2000,
+    "separators": ["\n\n", "\n", ". ", " "],
+    "respect_boundaries": true,
+    "boundary_types": ["heading", "paragraph", "code_block", "list"]
+  },
+  "alternative_chunking_strategies": {
+    "fixed": {
+      "description": "Fixed-size chunks with overlap",
+      "chunk_size": 800,
+      "chunk_overlap": 200,
+      "use_when": "Simple documents without clear structure"
+    },
+    "recursive": {
+      "description": "Recursively split text trying different separators",
+      "chunk_size": 1000,
+      "chunk_overlap": 200,
+      "separators": ["\n\n", "\n", " ", ""],
+      "use_when": "Mixed content types"
+    },
+    "code_aware": {
+      "description": "Specialized chunking for code that respects function/class boundaries",
+      "chunk_size": 1500,
+      "chunk_overlap": 100,
+      "preserve_structures": ["function", "class", "method"],
+      "use_when": "Code documentation and repositories"
+    }
+  },
+  "metadata_extraction": {
+    "enabled": true,
+    "extractors": [
+      {
+        "name": "technology_stack",
+        "description": "Extract technology names and versions",
+        "pattern": ".*\\.(js|py|java|go|rs)$",
+        "fields": ["language", "framework", "libraries"]
+      },
+      {
+        "name": "security_requirements",
+        "description": "Extract security-related metadata",
+        "keywords": ["security", "authentication", "authorization", "encryption"],
+        "fields": ["security_level", "compliance", "threat_model"]
+      },
+      {
+        "name": "api_contracts",
+        "description": "Extract API endpoint definitions",
+        "pattern": ".*api.*\\.(json|yaml|md)$",
+        "fields": ["method", "path", "request_schema", "response_schema"]
+      },
+      {
+        "name": "architectural_decisions",
+        "description": "Extract ADRs and design decisions",
+        "pattern": ".*adr.*\\.md$",
+        "fields": ["decision_id", "status", "context", "consequences"]
+      },
+      {
+        "name": "file_metadata",
+        "description": "Standard file metadata",
+        "fields": ["file_path", "file_type", "last_modified", "size", "section"]
+      }
+    ]
+  },
+  "indexing": {
+    "auto_index_on_startup": false,
+    "watch_for_changes": true,
+    "incremental_updates": true,
+    "index_patterns": [
+      "knowledge_base/**/*.md",
+      "src/project_meta/**/*.json",
+      "src/project_meta/**/*.md",
+      "src/project_meta/adr/**/*.md",
+      "docs/**/*.md"
+    ],
+    "exclude_patterns": [
+      "node_modules/**",
+      ".git/**",
+      "**/*.log",
+      "**/.*"
+    ],
+    "batch_size": 50,
+    "update_frequency_minutes": 60
+  },
+  "retrieval": {
+    "default_k": 5,
+    "max_k": 20,
+    "similarity_threshold": 0.7,
+    "retrieval_method": "similarity",
+    "alternative_methods": {
+      "mmr": {
+        "description": "Maximum Marginal Relevance - balances relevance with diversity",
+        "lambda_mult": 0.5,
+        "use_when": "Want diverse results"
+      },
+      "similarity_score_threshold": {
+        "description": "Only return results above threshold",
+        "score_threshold": 0.75,
+        "use_when": "Need high-confidence matches only"
+      }
+    },
+    "reranking": {
+      "enabled": false,
+      "model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "description": "Rerank initial results for better precision"
+    }
+  },
+  "query_processing": {
+    "query_expansion": {
+      "enabled": true,
+      "add_synonyms": true,
+      "add_related_terms": true,
+      "expand_acronyms": true
+    },
+    "query_preprocessing": {
+      "lowercase": true,
+      "remove_stop_words": false,
+      "stem": false,
+      "lemmatize": false
+    },
+    "multi_query": {
+      "enabled": false,
+      "generate_variants": 3,
+      "description": "Generate multiple query variants for better recall"
+    }
+  },
+  "caching": {
+    "enabled": true,
+    "cache_queries": true,
+    "cache_embeddings": true,
+    "cache_ttl_seconds": 3600,
+    "max_cache_size_mb": 500
+  },
+  "performance": {
+    "parallel_processing": true,
+    "max_workers": 4,
+    "timeout_seconds": 30,
+    "enable_gpu": false
+  },
+  "context_assembly": {
+    "max_total_tokens": 8000,
+    "include_metadata": true,
+    "format": "markdown",
+    "include_source_references": true,
+    "deduplicate": true,
+    "prioritize_recent": false,
+    "assembly_strategy": "ranked"
+  },
+  "monitoring": {
+    "log_queries": true,
+    "log_retrievals": true,
+    "track_relevance_scores": true,
+    "track_usage_stats": true,
+    "export_metrics": true,
+    "metrics_path": "./data/rag_metrics.json"
+  }
+}

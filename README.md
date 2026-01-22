@@ -32,7 +32,7 @@
 4.  **Initialize the Brain (Index Knowledge):**
     This populates the RAG database with the included knowledge base and agents.
     ```bash
-    python tools/rag/knowledge_indexer.py --index
+    python skills/rag/knowledge_indexer.py --index
     ```
 
 ## 🎮 Usage
@@ -62,7 +62,6 @@ python orchestrator.py
 │   ├── integrations/                   # Core system integration logic
 │   │   ├── enhanced_multi_agent_system.py # The advanced agent engine
 │   ├── knowledge_base/                 # Static knowledge and rules
-│   │   ├── agents/                     # Agent definitions and roles
 │   │   ├── setup/                      # Project setup guides (Rules.md)
 │   │   ├── skills/                     # Documentation for skills
 │   │   ├── technologies/               # Tech stack documentation
@@ -73,13 +72,14 @@ python orchestrator.py
 │   │   ├── security/                   # Threat model (threat-model.yaml)
 │   ├── src/                            # Source code of the target application
 │   ├── tests/                          # System tests
-│   ├── tools/                          # Executable tools and scripts
-│   │   ├── agents/                     # Python implementations of agents
-│   │   │   ├── imported_subagents.py   # 128+ generated agents
+│   ├── agents/                         # Multi-agent definitions (Markdown)
+│   │   ├── Core/                       # Coding, Planning, etc.
+│   │   ├── Backend_API/                # 128+ specialized agents
+│   ├── ai_wrapper/                     # Multi-model AI abstraction layer
+│   ├── skills/                         # Executable tools and skills
 │   │   ├── rag/                        # Knowledge indexing logic
 │   │   ├── security/                   # Policy enforcement logic
-│   │   ├── skills/                     # Skill implementations
-│   │   │   ├── imported_skills.py      # Registry of all skills
+│   │   ├── imported_skills.py          # Registry of all skills
 │   ├── data/                           # Runtime data (ignored by git)
 │   │   ├── chroma_db/                  # Local vector database
 │   ├── .planning/                      # Persistent task memory

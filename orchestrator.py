@@ -13,6 +13,12 @@ import glob
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
 
+# Import AgentLoader
+try:
+    from tools.ai_wrapper.agent_loader import get_agent_loader
+except ImportError:
+    pass
+
 # Fix for Windows Unicode Console
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -20,20 +26,22 @@ if sys.platform == 'win32':
 
 # ConfiguraciÃ³n de rutas del sistema
 SYSTEM_ROOT = os.path.dirname(os.path.abspath(__file__))
-TOOLS_DIR = os.path.join(SYSTEM_ROOT, 'tools')
-KB_DIR = os.path.join(SYSTEM_ROOT, 'knowledge_base')
-TEMPLATES_DIR = os.path.join(KB_DIR, 'templates')
+AGENTS_DIR = os.path.join(SYSTEM_ROOT, 'agents')
+SKILLS_DIR = os.path.join(SYSTEM_ROOT, 'skills')
+AI_WRAPPER_DIR = os.path.join(SYSTEM_ROOT, 'ai_wrapper')
+TEMPLATES_DIR = os.path.join(SYSTEM_ROOT, 'src', 'knowledge_base', 'templates')
 ENV_FILE = os.path.join(SYSTEM_ROOT, '.env')
 
-# Agregar tools al path
-sys.path.insert(0, TOOLS_DIR)
+# Agregar nuevas rutas al path
+sys.path.insert(0, os.path.join(SKILLS_DIR, 'system'))
+sys.path.insert(0, AI_WRAPPER_DIR)
 
 # Intentar importar IA
 try:
-    from ai_wrapper.multi_model import MultiModelProcessor, MultiModelConfig
-    from ai_wrapper.chat_manager import ChatManager
-    from ai_wrapper.providers.base import Message
-    from ai_wrapper.logging_config import get_logger
+    from multi_model import MultiModelProcessor, MultiModelConfig
+    from chat_manager import ChatManager
+    from providers.base import Message
+    from logging_config import get_logger
     AI_AVAILABLE = True
     logger = get_logger("orchestrator")
 except ImportError:
@@ -41,14 +49,14 @@ except ImportError:
     # Mock logger if AI is not available
     class MockLogger:
         def __getattr__(self, name):
-            return lambda *args, **kwargs: print(f"LOGGER.{name}:", *args, **kwargs)
+            return lambda *args, **kwargs: print(f"LOGGER.{name}:", *args)
     logger = MockLogger()
 
 # Intentar importar Enhanced Multi-Agent System
 try:
     sys.path.append(SYSTEM_ROOT)
     from integrations.enhanced_multi_agent_system import EnhancedMultiAgentSystem
-    from tools.security.policy_enforcer import SecurityPolicyEnforcer
+    from security.policy_enforcer import SecurityPolicyEnforcer
     ENHANCED_SYSTEM_AVAILABLE = True
 except ImportError as e:
     ENHANCED_SYSTEM_AVAILABLE = False
@@ -78,6 +86,8 @@ class OrchestratorToolboxAdapter:
 class Orchestrator:
     def __init__(self):
         self.active_root = SYSTEM_ROOT
+        self.agents_root = AGENTS_DIR
+        self.skills_root = SKILLS_DIR
         self.ai = None
         self.enhanced_system = None
         self.chat_manager = None
@@ -121,7 +131,7 @@ class Orchestrator:
         self.prompt_library = {}
         
         # 1. Cargar Reglas (07-Rules.md)
-        rules_path = os.path.join(self.active_root, 'knowledge_base', 'setup', '07-Rules.md')
+        rules_path = os.path.join(self.active_root, 'src', 'setup', '07-Rules.md')
         if os.path.exists(rules_path):
             try:
                 with open(rules_path, 'r', encoding='utf-8') as f:
@@ -131,7 +141,7 @@ class Orchestrator:
                 logger.error(f"Error loading rules: {e}")
 
         # 2. Cargar Prompt Library
-        prompts_path = os.path.join(self.active_root, 'project_meta', 'ai-context', 'prompt-library.json')
+        prompts_path = os.path.join(self.active_root, 'src', 'project_meta', 'ai-context', 'prompt-library.json')
         if os.path.exists(prompts_path):
             try:
                 with open(prompts_path, 'r', encoding='utf-8') as f:
@@ -184,6 +194,43 @@ class Orchestrator:
                 self.ai = None
                 logger.error("Failed to initialize AI MultiModelProcessor", error=str(e))
 
+    def load_agent(self, agent_name: str) -> Dict[str, Any]:
+        """Loads an agent definition from Markdown."""
+        try:
+            loader = get_agent_loader(self.agents_root)
+            return loader.load_agent(agent_name)
+        except Exception as e:
+            logger.error(f"Error loading agent {agent_name}: {e}")
+            return None
+
+    async def invoke_agent(self, agent_name: str, task_context: str) -> str:
+        """Invokes an agent with a specific task."""
+        agent_config = self.load_agent(agent_name)
+        if not agent_config:
+            return f"Error: Agent {agent_name} not found."
+            
+        system_prompt = agent_config.get('system_prompt', '')
+        
+        # Construct messages
+        messages = [
+            Message(role='system', content=system_prompt),
+            Message(role='user', content=task_context)
+        ]
+        
+        try:
+            # Use AI processor
+            if self.ai:
+                response = await self.ai.process_single(
+                    messages=messages,
+                    system_prompt=system_prompt, # Redundant but safe
+                    tools=self.TOOL_DEFINITIONS # Give access to standard tools
+                )
+                return response.content
+            else:
+                return "Error: AI not available."
+        except Exception as e:
+            return f"Error invoking agent: {e}"
+
     def _init_chat_manager(self):
         if AI_AVAILABLE:
             history_path = os.path.join(self.active_root, "chat_history.json")
@@ -194,41 +241,15 @@ class Orchestrator:
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def _discover_script_tools(self):
-        """Escanea la carpeta tools/ y convierte scripts python en herramientas."""
-        tools_path = os.path.join(self.active_root, 'tools')
-        if not os.path.exists(tools_path): return
+        """Escanea la carpeta skills/ y convierte scripts python en herramientas."""
+        skills_path = os.path.join(self.active_root, 'skills')
+        if not os.path.exists(skills_path): return
 
-        scripts = glob.glob(os.path.join(tools_path, "*.py"))
-        for script in scripts:
-            name = os.path.basename(script)
-            if name == "__init__.py": continue
-            
-            tool_name = f"tool_{name.replace('.py', '')}"
-            rel_path = os.path.relpath(script, self.active_root).replace('\\', '/')
-            
-            # DefiniciÃ³n dinÃ¡mica
-            tool_def = {
-                "type": "function",
-                "function": {
-                    "name": tool_name,
-                    "description": f"Ejecuta el script de utilidad '{name}'. Usa esto para tareas especÃ­ficas del proyecto.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "args": {"type": "string", "description": "Argumentos opcionales para el script (ej: '--check')"}
-                        },
-                        "required": []
-                    }
-                }
-            }
-            
-            # Wrapper de ejecuciÃ³n
-            def make_wrapper(script_path):
-                return lambda args="": self._run_script_wrapper(script_path, args)
-            
-            self.TOOL_DEFINITIONS.append(tool_def)
-            self.AVAILABLE_TOOLS[tool_name] = make_wrapper(rel_path)
-            logger.info(f"Discovered tool: {tool_name}")
+        # Buscar recursivamente en todas las subcarpetas de skills (system, maintenance, modules, catalog)
+        for root, dirs, files in os.walk(skills_path):
+            for file in files:
+                if file.startswith('tool_') and file.endswith('.py'):
+                    self._register_script_tool(os.path.join(root, file))
 
     def _run_script_wrapper(self, script_path, args):
         """Ejecuta un script python y captura su salida."""
@@ -1576,4 +1597,87 @@ if __name__ == "__main__":
     app = Orchestrator()
     try:
         app.main_loop()
-    except KeyboardInterrupt: pass
+    except KeyboardInterrupt: pass    async def cmd_init(self, project_path_arg: Optional[str] = None):
+        """Inicializa un nuevo proyecto duplicando y rellenando la plantilla project_meta."""
+        print("\n?? --- Inicializando Proyecto ---")
+        
+        # Usar argumento si se provee, si no, usar el directorio activo
+        target_root = os.path.join(SYSTEM_ROOT, project_path_arg) if project_path_arg else self.active_root
+        
+        project_meta_path = os.path.join(target_root, 'src', 'knowledge_base', 'project_meta')
+        
+        # 1. Verificar si project_meta ya existe
+        if os.path.exists(project_meta_path):
+            print("??  Advertencia: Ya existe una configuración 'project_meta' en este directorio.")
+            action = input("¿Qué deseas hacer? ([S]obrescribir, [F]usionar/Actualizar, [C]ancelar): ").lower()
+            if action == 's':
+                print("Procediendo a sobrescribir...")
+                try:
+                    shutil.rmtree(project_meta_path)
+                except Exception as e:
+                    print(f"? Error al eliminar 'project_meta' existente: {e}")
+                    return
+            elif action == 'f':
+                print("Fusionando/Actualizando (funcionalidad pendiente). Por ahora, se cancelará.")
+                return
+            else:
+                print("Operación cancelada.")
+                return
+        
+        # 2. Copiar la plantilla
+        template_path = os.path.join(SYSTEM_ROOT, 'src', 'knowledge_base', 'project_meta')
+        if not os.path.exists(template_path):
+             print(f"? Error: No se encontró la plantilla de 'project_meta' en {template_path}")
+             return
+        
+        try:
+            shutil.copytree(template_path, project_meta_path)
+            print(f"? Plantilla 'project_meta' duplicada en '{project_meta_path}'")
+        except Exception as e:
+            print(f"? Error al duplicar la plantilla: {e}")
+            return
+            
+        # 3. Escaneo Autónomo
+        print("\n?? Escaneando archivos del proyecto para análisis...")
+        project_files = []
+        excluded_dirs = ['.git', 'node_modules', '.venv', '__pycache__', 'dist', 'build']
+        for root, dirs, files in os.walk(target_root):
+            dirs[:] = [d for d in dirs if d not in excluded_dirs]
+            for file in files:
+                project_files.append(os.path.join(root, file))
+        
+        file_count = len(project_files)
+        print(f"Se encontraron {file_count} archivos.")
+        
+        confirm = input("¿Deseas que el equipo de agentes analice estos archivos para rellenar 'project_meta'? (s/n): ").lower()
+        if confirm != 's':
+            print("Operación cancelada. 'project_meta' ha sido creado pero está vacío.")
+            return
+
+        # 4. Invocación del Equipo de Agentes
+        print("\n?? Invocando al equipo de 12 agentes para el llenado inteligente...")
+        
+        files_context = ""
+        for file_path in project_files[:20]:
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    files_context += f"--- Contenido de {file_path} ---\n{f.read(500)}\n\n"
+            except Exception:
+                continue
+
+        task_description = f"""
+        **Tarea Crítica: Inicialización de Proyecto**
+        Has sido invocado para analizar un nuevo proyecto y rellenar la estructura de 'project_meta' de forma inteligente.
+        **Contexto del Proyecto (Resumen de Archivos):**
+        {files_context}
+        **Tu Misión:**
+        Como 'orchestrator_agent', coordina a tu equipo de 11 especialistas (Product Manager, Business Analyst, Cloud Architect, etc.) para que cada uno, según su rol, analice el contexto proporcionado y rellene los documentos correspondientes dentro de la nueva carpeta '{project_meta_path}'.
+        **Instrucciones Finales:**
+        - Utiliza las herramientas write_file para actualizar cada documento de project_meta.
+        - Si la información no es suficiente, rellena los campos con placeholders como [TODO: Definir por el usuario].
+        - Al finalizar, responde únicamente con "Proceso de inicialización de project_meta completado."
+        """
+        
+        response = await self.invoke_agent("Core/orchestrator_agent", task_description)
+        print(f"\n[Respuesta del Equipo de Agentes]:\n{response}")
+

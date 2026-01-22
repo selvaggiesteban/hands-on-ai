@@ -31,6 +31,13 @@ import hashlib
 
 SYSTEM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Import AgentLoader
+try:
+    sys.path.append(os.path.join(SYSTEM_ROOT, 'ai_wrapper'))
+    from agent_loader import get_agent_loader
+except ImportError:
+    print("⚠️ Could not import AgentLoader")
+
 
 # ============================================================================
 #  MULTI-MODEL PROVIDER CONFIGURATION
@@ -312,159 +319,89 @@ class MultiModelProviders:
 
 class PlanningWithFiles:
     """
-    Sistema de planificación persistente con 3 archivos Markdown.
-    Implementa el patrón Manus-style para memoria extendida.
+    Sistema de planificación persistente que lee y actualiza directamente
+    la estructura de documentos en 'project_meta'.
     """
 
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
-        self.planning_dir = self.project_root / ".planning"
-        self.planning_dir.mkdir(exist_ok=True)
-
-        # Archivos del sistema de 3 archivos
-        self.task_plan_path = self.planning_dir / "task_plan.md"
-        self.findings_path = self.planning_dir / "findings.md"
-        self.progress_path = self.planning_dir / "progress.md"
+        self.project_meta_path = self.project_root / "src" / "knowledge_base" / "project_meta"
+        
+        # Mapeo directo a los documentos de 'project_meta'
+        self.task_plan_path = self.project_meta_path / "planning" / "plan.md"
+        self.adr_path = self.project_meta_path / "adr"
+        self.reports_path = self.project_meta_path / "reports"
+        self.progress_log_path = self.reports_path / "runtime_log.md"
 
         self._initialize_files()
 
     def _initialize_files(self):
-        """Inicializa los archivos si no existen."""
-        if not self.task_plan_path.exists():
-            self.task_plan_path.write_text(self._get_task_plan_template())
-        if not self.findings_path.exists():
-            self.findings_path.write_text(self._get_findings_template())
-        if not self.progress_path.exists():
-            self.progress_path.write_text(self._get_progress_template())
+        """Asegura que los directorios y el log de progreso existan."""
+        self.adr_path.mkdir(exist_ok=True)
+        self.reports_path.mkdir(exist_ok=True)
+        if not self.progress_log_path.exists():
+            self.progress_log_path.write_text(f"# Log de Progreso del Agente\n\n*Última actualización: {datetime.now().isoformat()}*\n")
 
-    def _get_task_plan_template(self) -> str:
-        return """# Task Plan
-
-## Current Phase
-- [ ] Phase not started
-
-## Milestones
-1. [ ] Milestone 1: Setup
-2. [ ] Milestone 2: Implementation
-3. [ ] Milestone 3: Testing
-4. [ ] Milestone 4: Deployment
-
-## Tasks Queue
-<!-- Add tasks here -->
-
-## Completed Tasks
-<!-- Move completed tasks here -->
-
----
-*Last updated: {timestamp}*
-""".format(timestamp=datetime.now().isoformat())
-
-    def _get_findings_template(self) -> str:
-        return """# Findings & Research
-
-## Key Discoveries
-<!-- Document important findings here -->
-
-## Technical Decisions
-<!-- Record architectural decisions -->
-
-## Code Patterns Found
-<!-- Useful patterns discovered in codebase -->
-
-## External References
-<!-- Links and documentation -->
-
----
-*Last updated: {timestamp}*
-""".format(timestamp=datetime.now().isoformat())
-
-    def _get_progress_template(self) -> str:
-        return """# Progress Log
-
-## Session History
-
-### Session {date}
-- Started: {timestamp}
-- Status: In Progress
-
-#### Actions Taken
-<!-- Log actions here -->
-
-#### Errors Encountered
-<!-- Log errors to prevent repetition -->
-
-#### Test Results
-<!-- Record test outcomes -->
-
----
-*Last updated: {timestamp}*
-""".format(date=datetime.now().strftime("%Y-%m-%d"), timestamp=datetime.now().isoformat())
-
-    def add_task(self, task: str, phase: str = "Current"):
-        """Agrega una tarea al plan."""
-        content = self.task_plan_path.read_text()
+    def add_task(self, task: str, phase: str = "Tasks Queue"):
+        """Agrega una tarea al plan.md bajo una sección específica."""
+        content = self.task_plan_path.read_text() if self.task_plan_path.exists() else f"# Plan del Proyecto\n\n## {phase}\n"
         task_entry = f"- [ ] {task}\n"
 
-        # Insertar después de "## Tasks Queue"
-        if "## Tasks Queue" in content:
-            parts = content.split("## Tasks Queue")
-            content = parts[0] + "## Tasks Queue\n" + task_entry + parts[1].lstrip("\n")
+        section = f"## {phase}"
+        if section in content:
+            parts = content.split(section)
+            content = parts[0] + section + "\n" + task_entry + parts[1].lstrip("\n")
+        else:
+            content += f"\n{section}\n{task_entry}"
 
         self.task_plan_path.write_text(content)
 
     def complete_task(self, task: str):
-        """Marca una tarea como completada."""
+        """Marca una tarea como completada en plan.md."""
+        if not self.task_plan_path.exists(): return
         content = self.task_plan_path.read_text()
         content = content.replace(f"- [ ] {task}", f"- [x] {task}")
         self.task_plan_path.write_text(content)
 
-    def add_finding(self, category: str, finding: str):
-        """Agrega un hallazgo al archivo de findings."""
-        content = self.findings_path.read_text()
-        entry = f"\n- **{datetime.now().strftime('%H:%M')}**: {finding}\n"
-
-        if f"## {category}" in content:
-            parts = content.split(f"## {category}")
-            content = parts[0] + f"## {category}" + entry + parts[1]
-        else:
-            content += f"\n## {category}{entry}"
-
-        self.findings_path.write_text(content)
+    def add_finding(self, title: str, finding: str):
+        """Crea un nuevo Architecture Decision Record (ADR) para un hallazgo."""
+        adr_template = (self.adr_path / "adr-template.md").read_text() if (self.adr_path / "adr-template.md").exists() else "# {title}\n\n## Status\n\nProposed\n\n## Context\n\n{context}\n"
+        
+        new_adr_content = adr_template.replace("{title}", title).replace("{context}", finding)
+        
+        # Crear un nombre de archivo seguro
+        safe_filename = "".join([c for c in title if c.isalnum() or c in (' ', '-')]).rstrip().replace(' ', '-')
+        new_adr_path = self.adr_path / f"{datetime.now().strftime('%Y%m%d')}-{safe_filename}.md"
+        
+        new_adr_path.write_text(new_adr_content)
 
     def log_progress(self, action: str, status: str = "completed"):
-        """Registra progreso en el log."""
-        content = self.progress_path.read_text()
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        entry = f"- [{timestamp}] [{status.upper()}] {action}\n"
-
-        if "#### Actions Taken" in content:
-            parts = content.split("#### Actions Taken")
-            content = parts[0] + "#### Actions Taken\n" + entry + parts[1].lstrip("\n")
-
-        self.progress_path.write_text(content)
+        """Registra progreso en el log de reportes."""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"- `[{timestamp}]` **[{status.upper()}]** {action}\n"
+        with self.progress_log_path.open("a") as f:
+            f.write(entry)
 
     def log_error(self, error: str, context: str = ""):
-        """Registra un error para evitar repetición."""
-        content = self.progress_path.read_text()
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        entry = f"- [{timestamp}] ERROR: {error}"
+        """Registra un error en el log de reportes."""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"- `[{timestamp}]` **[ERROR]** {error}"
         if context:
-            entry += f"\n  Context: {context}"
+            entry += f"\n  - *Contexto:* {context}"
         entry += "\n"
-
-        if "#### Errors Encountered" in content:
-            parts = content.split("#### Errors Encountered")
-            content = parts[0] + "#### Errors Encountered\n" + entry + parts[1].lstrip("\n")
-
-        self.progress_path.write_text(content)
+        with self.progress_log_path.open("a") as f:
+            f.write(entry)
 
     def get_context(self) -> Dict[str, str]:
-        """Obtiene el contexto completo de los 3 archivos."""
-        return {
-            "task_plan": self.task_plan_path.read_text(),
-            "findings": self.findings_path.read_text(),
-            "progress": self.progress_path.read_text()
-        }
+        """Obtiene el contexto completo de los documentos 'project_meta'."""
+        context = {}
+        for root, _, files in os.walk(self.project_meta_path):
+            for file in files:
+                if file.endswith(('.md', '.json', '.yaml')):
+                    path = Path(root) / file
+                    key = path.relative_to(self.project_meta_path).as_posix().replace('/', '_')
+                    context[key] = path.read_text()
+        return context
 
 
 # ============================================================================
@@ -490,15 +427,15 @@ class SkillRegistry:
 
     def __init__(self, skills_dir: str = None):
         self.skills: Dict[str, Skill] = {}
-        self.skills_dir = Path(skills_dir) if skills_dir else Path(SYSTEM_ROOT) / "skills"
+        self.skills_dir = Path(skills_dir) if skills_dir else Path(SYSTEM_ROOT) / "skills" / "catalog"
         self._load_builtin_skills()
 
     def _load_builtin_skills(self):
         """Carga skills builtin e importadas del sistema."""
         
-        # 1. Cargar Core Skills (Framework)
+        # 1. Cargar Core Skills (Framework) desde skills/system
         try:
-            sys.path.append(os.path.join(SYSTEM_ROOT, 'tools', 'skills'))
+            sys.path.append(os.path.join(SYSTEM_ROOT, 'skills', 'system'))
             from core_skills import CORE_SKILLS
             for skill_id, skill_config in CORE_SKILLS.items():
                 self.register(Skill(
@@ -510,7 +447,7 @@ class SkillRegistry:
         except ImportError as e:
             print(f"⚠️ Could not load core_skills: {e}")
 
-        # 2. Cargar skills importadas automáticamente (Anthropic/Superpowers)
+        # 2. Cargar skills importadas automáticamente desde skills/system
         try:
             from imported_skills import IMPORTED_SKILLS
             for skill_id, skill_config in IMPORTED_SKILLS.items():
@@ -628,133 +565,76 @@ class SubagentRegistry:
         self._register_builtin_subagents()
 
     def _register_builtin_subagents(self):
-        """Registra subagentes predefinidos e importados."""
+        """Registra subagentes descubiertos dinámicamente vía AgentLoader."""
         
-        # 1. Cargar subagentes importados automáticamente
         try:
-            # Añadir path para encontrar el módulo generado
-            sys.path.append(os.path.join(SYSTEM_ROOT, 'tools', 'agents'))
-            from imported_subagents import IMPORTED_SUBAGENTS
+            loader = get_agent_loader(os.path.join(SYSTEM_ROOT, 'agents'))
+            available_agents = loader.list_agents()
             
-            for agent_enum, agent_config in IMPORTED_SUBAGENTS.items():
-                # Convertir al formato interno si es necesario o registrar directamente
-                # Hack: Usamos el enum del importado como clave, o creamos una dinámica
-                # Por simplicidad, inyectamos en el diccionario interno usando el nombre string
-                self.subagents[agent_config.type] = agent_config
-                # print(f"Loaded imported agent: {agent_config.type}")
-                
-        except ImportError as e:
-            print(f"⚠️ Could not load imported_subagents: {e}")
+            for agent_name, agent_path in available_agents.items():
+                try:
+                    config = loader.load_agent(agent_name)
+                    
+                    # Create a dynamic Enum member if not exists (or just use string keys)
+                    # For compatibility with existing code, we map to SubagentConfig
+                    # We use the 'type' from frontmatter or the filename as the key
+                    
+                    agent_type_str = config.get("type", agent_name.split('/')[-1])
+                    
+                    # Map capabilities and tools
+                    # If they are strings (legacy), wrap in list
+                    capabilities = config.get("capabilities", [])
+                    if isinstance(capabilities, str): capabilities = [capabilities]
+                    
+                    tools = config.get("tools", [])
+                    if isinstance(tools, str): tools = [tools]
+                    
+                    # Create SubagentConfig
+                    subagent_config = SubagentConfig(
+                        type=agent_type_str, # Using string instead of Enum strictly
+                        description=config.get("description", "No description provided"),
+                        capabilities=capabilities,
+                        preferred_model="anthropic/claude-sonnet-4-20250514", # Default
+                        tool_permissions=tools,
+                        system_prompt=config.get("system_prompt", "")
+                    )
+                    
+                    self.register(subagent_config)
+                    # print(f"Loaded agent: {agent_name} -> {agent_type_str}")
+                    
+                except Exception as e:
+                    print(f"Error loading agent {agent_name}: {e}")
+                    
+        except Exception as e:
+            print(f"⚠️ AgentLoader failed: {e}")
 
-        # 2. Registrar subagentes hardcoded (Legacy/Core)
-        # Frontend Developer
-        self.register(SubagentConfig(
-            type=SubagentType.FRONTEND_DEVELOPER,
-            description="Expert in modern frontend development",
-            capabilities=["react", "vue", "nextjs", "tailwind", "typescript", "accessibility"],
-            preferred_model="anthropic/claude-sonnet-4-20250514",
-            tool_permissions=["read", "write", "edit", "glob", "grep"],
-            system_prompt="""You are an expert frontend developer specializing in:
-- React/Next.js with TypeScript
-- Modern CSS (Tailwind, CSS-in-JS)
-- Accessibility (WCAG 2.1)
-- Performance optimization
-- Component architecture
-
-Always follow best practices for maintainable, accessible UI code."""
-        ))
-
-        # Backend Developer
-        self.register(SubagentConfig(
-            type=SubagentType.BACKEND_DEVELOPER,
-            description="Expert in backend systems and APIs",
-            capabilities=["nodejs", "python", "api_design", "databases", "authentication"],
-            preferred_model="anthropic/claude-sonnet-4-20250514",
-            tool_permissions=["read", "write", "edit", "glob", "grep", "bash"],
-            system_prompt="""You are an expert backend developer specializing in:
-- RESTful API design
-- Database design and optimization
-- Authentication/Authorization
-- Microservices architecture
-- Performance and scalability
-
-Always follow security best practices and write testable code."""
-        ))
-
-        # Security Engineer
-        self.register(SubagentConfig(
-            type=SubagentType.SECURITY_ENGINEER,
-            description="Expert in application security",
-            capabilities=["owasp", "penetration_testing", "code_audit", "compliance"],
-            preferred_model="anthropic/claude-opus-4-5-20251101",
-            tool_permissions=["read", "glob", "grep"],
-            system_prompt="""You are a security engineer specializing in:
-- OWASP Top 10 vulnerability detection
-- Secure code review
-- Authentication/Authorization security
-- Data protection and encryption
-- Compliance (GDPR, SOC2, etc.)
-
-Always prioritize security and provide actionable remediation steps."""
-        ))
-
-        # Code Reviewer
-        self.register(SubagentConfig(
-            type=SubagentType.CODE_REVIEWER,
-            description="Expert code reviewer",
-            capabilities=["code_quality", "best_practices", "performance", "security"],
-            preferred_model="openai/o1-preview",
-            tool_permissions=["read", "glob", "grep"],
-            system_prompt="""You are an expert code reviewer who provides:
-- Detailed, constructive feedback
-- Specific line references for issues
-- Security vulnerability detection
-- Performance improvement suggestions
-- Best practice recommendations
-
-Be thorough but prioritize the most impactful issues."""
-        ))
-
-        # Documentation Engineer
-        self.register(SubagentConfig(
-            type=SubagentType.DOCUMENTATION_ENGINEER,
-            description="Expert in technical documentation",
-            capabilities=["api_docs", "readme", "tutorials", "jsdoc", "openapi"],
-            preferred_model="google/gemini-2.0-flash",
-            tool_permissions=["read", "write", "glob"],
-            system_prompt="""You are a documentation engineer who creates:
-- Clear, concise API documentation
-- User-friendly README files
-- Step-by-step tutorials
-- JSDoc/TSDoc comments
-- OpenAPI specifications
-
-Write for your audience - technical accuracy with accessibility."""
-        ))
-
-        # Multi-Agent Coordinator
-        self.register(SubagentConfig(
-            type=SubagentType.MULTI_AGENT_COORDINATOR,
-            description="Coordinates multiple specialized agents",
-            capabilities=["orchestration", "task_distribution", "conflict_resolution"],
-            preferred_model="anthropic/claude-opus-4-5-20251101",
-            tool_permissions=["*"],
-            system_prompt="""You are a multi-agent coordinator responsible for:
-- Breaking complex tasks into subtasks
-- Assigning tasks to appropriate specialized agents
-- Resolving conflicts between agent outputs
-- Synthesizing results into coherent solutions
-- Ensuring quality across all agent contributions
-
-Orchestrate efficiently and ensure all agents work towards the common goal."""
-        ))
+        # Fallback: Register minimal core agents if loader fails
+        if not self.subagents:
+            print("⚠️ Using fallback core agents")
+            self.register(SubagentConfig(
+                type="frontend-developer",
+                description="Expert in modern frontend development",
+                capabilities=["react", "typescript"],
+                preferred_model="anthropic/claude-sonnet-4-20250514",
+                tool_permissions=["read", "write"],
+                system_prompt="You are a frontend developer."
+            ))
 
     def register(self, config: SubagentConfig):
         """Registra un subagente."""
-        self.subagents[config.type] = config
+        # Allow registering by string key if type is not in Enum
+        key = config.type
+        self.subagents[key] = config
 
-    def get(self, agent_type: SubagentType) -> Optional[SubagentConfig]:
+    def get(self, agent_type: Any) -> Optional[SubagentConfig]:
         """Obtiene configuración de un subagente."""
+        # Handle Enum or String
+        if hasattr(agent_type, 'value'):
+            key = agent_type.value
+            # Try finding by value first (if registered with string)
+            for k, v in self.subagents.items():
+                if k == key: return v
+            return self.subagents.get(agent_type)
         return self.subagents.get(agent_type)
 
     def find_for_task(self, task_description: str) -> List[SubagentConfig]:
@@ -762,20 +642,19 @@ Orchestrate efficiently and ensure all agents work towards the common goal."""
         task_lower = task_description.lower()
         matching = []
 
-        keywords_map = {
-            SubagentType.FRONTEND_DEVELOPER: ["ui", "component", "react", "css", "frontend", "button", "form"],
-            SubagentType.BACKEND_DEVELOPER: ["api", "endpoint", "database", "server", "backend", "route"],
-            SubagentType.SECURITY_ENGINEER: ["security", "auth", "vulnerability", "encrypt", "owasp"],
-            SubagentType.CODE_REVIEWER: ["review", "check", "audit", "quality"],
-            SubagentType.DOCUMENTATION_ENGINEER: ["document", "readme", "docs", "comment"],
-        }
-
-        for agent_type, keywords in keywords_map.items():
-            if any(kw in task_lower for kw in keywords):
-                if agent_type in self.subagents:
-                    matching.append(self.subagents[agent_type])
-
-        return matching or [self.subagents[SubagentType.FULLSTACK_DEVELOPER]] if SubagentType.FULLSTACK_DEVELOPER in self.subagents else []
+        # Simple keyword matching against description and type
+        for config in self.subagents.values():
+            key_str = str(config.type)
+            if hasattr(config.type, 'value'):
+                key_str = config.type.value
+                
+            if key_str in task_lower or any(cap.lower() in task_lower for cap in config.capabilities):
+                matching.append(config)
+        
+        # Sort by relevance (keyword matches)
+        matching.sort(key=lambda x: sum(1 for w in task_lower.split() if w in str(x.type).lower() or w in x.description.lower()), reverse=True)
+        
+        return matching[:3]  # Return top 3
 
 
 # ============================================================================

@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /project/
-Disallow: /data/
-Sitemap: /sitemap.xml

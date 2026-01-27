@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Macros",
+  "items": [
+    "Are declarative macros (macro_rules!) used for repetitive patterns?",
+    "Are procedural macros used for code generation (derive)?",
+    "Is macro usage documented?",
+    "Are macros hygienic?",
+    "Is code readability prioritized over macro magic?",
+    "Are common macros like 'println!', 'vec!', 'format!' used?"
+  ]
+}

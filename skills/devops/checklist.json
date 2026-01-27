@@ -1,0 +1,12 @@
+{
+  "category": "DevOps",
+  "topic": "CI/CD Pipeline",
+  "items": [
+    "Is the CI/CD pipeline fully automated from code commit to deployment?",
+    "Are build artifacts versioned and stored in a secure registry?",
+    "Does the pipeline include automated security scanning (SAST/DAST)?",
+    "Are deployment environments (Dev, Staging, Prod) strictly isolated?",
+    "Is there a zero-downtime deployment strategy (e.g., Blue-Green, Canary)?",
+    "Are rollbacks automated in case of deployment failure?"
+  ]
+}

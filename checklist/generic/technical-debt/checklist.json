@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Technical Debt",
+  "items": [
+    "Is technical debt tracked in the backlog?",
+    "Is time allocated for debt repayment?",
+    "Is the impact of debt understood?",
+    "Is accidental debt distinguished from deliberate debt?",
+    "Are 'TODO' comments reviewed regularly?",
+    "Is refactoring prioritized based on ROI?"
+  ]
+}

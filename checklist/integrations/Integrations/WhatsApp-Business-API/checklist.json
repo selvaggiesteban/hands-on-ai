@@ -1,0 +1,12 @@
+{
+  "category": "Integrations",
+  "topic": "WhatsApp Business API",
+  "items": [
+    "Is the phone number verified and registered?",
+    "Are message templates pre-approved by Meta?",
+    "Is the 24-hour customer service window respected?",
+    "Are incoming webhooks processed asynchronously?",
+    "Is end-to-end encryption status verified?",
+    "Are distinct conversation categories (Marketing, Utility) handled correctly?"
+  ]
+}

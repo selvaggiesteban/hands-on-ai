@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Project Scaffolder",
+  "items": [
+    "Is the boilerplate code minimal and easy to extend?",
+    "Are all necessary configuration files (.gitignore, .env.example, etc.) included?",
+    "Does the scaffolder initialize a git repository by default?",
+    "Are project dependencies installed automatically during scaffolding?",
+    "Is the folder structure compliant with project standards?",
+    "Are placeholder values (e.g., project name) correctly injected into all files?"
+  ]
+}

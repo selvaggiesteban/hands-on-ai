@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "KB Generator",
+  "items": [
+    "Is the knowledge base generated from up-to-date sources?",
+    "Are formats consistent (Markdown, JSON)?",
+    "Is sensitive information filtered out?",
+    "Is the generation process automated in CI?",
+    "Are generated files indexed immediately?",
+    "Is versioning applied to the knowledge base?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Fixture Generator",
+  "items": [
+    "Are fixtures generated with realistic data?",
+    "Is 'faker' or similar library used for randomness?",
+    "Are fixtures deterministic (seedable)?",
+    "Are relationships between models preserved?",
+    "Can fixtures be generated for specific environments (dev vs test)?",
+    "Are old fixtures cleaned up before generation?"
+  ]
+}

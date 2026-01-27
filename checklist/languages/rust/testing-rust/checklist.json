@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Testing",
+  "items": [
+    "Are unit tests placed in the same file as the code (cfg(test))?",
+    "Are integration tests placed in the 'tests' directory?",
+    "Is 'assert_eq!' and 'assert_ne!' used?",
+    "Are 'should_panic' attributes used for expected failures?",
+    "Are doctests used to verify documentation examples?",
+    "Is 'cargo test' used to run all tests?"
+  ]
+}

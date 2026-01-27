@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Decorators",
+  "items": [
+    "Is 'experimentalDecorators' enabled in tsconfig?",
+    "Are decorator factories used for parameterized decorators?",
+    "Are class, method, property, and parameter decorators distinguished?",
+    "Is the 'emitDecoratorMetadata' option used if runtime reflection is needed?",
+    "Are decorators typed correctly (ClassDecorator, MethodDecorator)?",
+    "Is the new standard decorator proposal tracked?"
+  ]
+}

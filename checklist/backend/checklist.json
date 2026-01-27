@@ -1,0 +1,12 @@
+{
+  "category": "Backend",
+  "topic": "General Backend Standards",
+  "items": [
+    "Is the API RESTful or GraphQL compliant with established standards?",
+    "Are database queries optimized to avoid N+1 problems?",
+    "Is error handling centralized and consistent across the application?",
+    "Are logs structured (e.g., JSON) and contain sufficient context (Correlation IDs)?",
+    "Is the application stateless to allow for horizontal scaling?",
+    "Are background jobs used for long-running tasks?"
+  ]
+}

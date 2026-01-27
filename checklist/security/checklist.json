@@ -1,0 +1,12 @@
+{
+  "category": "Security",
+  "topic": "General Security",
+  "items": [
+    "Are all secrets and API keys excluded from version control (e.g., in .env files)?",
+    "Is HTTPS enforced for all external communications?",
+    "Are dependencies scanned for known vulnerabilities (e.g., using Snyk or Dependabot)?",
+    "Is input validation performed on all API endpoints to prevent injection attacks?",
+    "Are proper authentication and authorization checks applied to all protected routes?",
+    "Is sensitive data (passwords, PII) encrypted at rest and in transit?"
+  ]
+}

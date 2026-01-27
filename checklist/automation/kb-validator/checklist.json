@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "KB Validator",
+  "items": [
+    "Are broken links detected?",
+    "Is formatting validated against the style guide?",
+    "Are required metadata fields present?",
+    "Is the content freshness checked?",
+    "Are duplicate entries detected?",
+    "Is the validation run as a pre-commit hook?"
+  ]
+}

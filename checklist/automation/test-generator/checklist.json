@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Test Generator",
+  "items": [
+    "Are edge cases and boundary conditions included in the generated tests?",
+    "Is the generated code compatible with the project's testing framework (e.g., Jest, Pytest)?",
+    "Are mocks and stubs used for external dependencies?",
+    "Is the test code generated with high readability and comments?",
+    "Does the generator support multiple test types (Unit, Integration)?",
+    "Is there a way to customize the templates used for test generation?"
+  ]
+}

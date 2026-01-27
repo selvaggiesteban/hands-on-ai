@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Object Methods",
+  "items": [
+    "Is 'Object.keys', 'Object.values', 'Object.entries' used for iteration?",
+    "Is 'Object.assign' used correctly (or spread syntax preferred)?",
+    "Is 'Object.freeze' used for immutable objects?",
+    "Is 'Object.fromEntries' used to convert arrays back to objects?",
+    "Is 'hasOwnProperty' used safely (Object.prototype.hasOwnProperty.call)?",
+    "Are prototype methods avoided on plain objects?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Currying",
+  "items": [
+    "Is currying used to create specialized functions from general ones?",
+    "Is the argument order optimized for partial application (data last)?",
+    "Are curried functions kept readable?",
+    "Is 'bind' used for simple partial application?",
+    "Are library helpers (like Ramda or Lodash) used for auto-currying?",
+    "Is performance impact considered for deep currying?"
+  ]
+}

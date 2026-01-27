@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Virtual Environments",
+  "items": [
+    "Is a virtual environment created for every project?",
+    "Is the venv folder excluded from version control (.gitignore)?",
+    "Is the environment activated before running code?",
+    "Are tools like 'venv', 'virtualenv', or 'conda' used?",
+    "Is the python version consistent with the environment?",
+    "Is the environment reproducible via requirements files?"
+  ]
+}

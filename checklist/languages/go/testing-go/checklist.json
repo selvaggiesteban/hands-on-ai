@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Testing",
+  "items": [
+    "Are test files named '_test.go'?",
+    "Are table-driven tests used for covering multiple cases?",
+    "Is 't.Run' used for subtests?",
+    "Is 'testdata' directory used for fixture files?",
+    "Are mocks generated or implemented manually via interfaces?",
+    "Is 't.Parallel()' used for parallel test execution?"
+  ]
+}

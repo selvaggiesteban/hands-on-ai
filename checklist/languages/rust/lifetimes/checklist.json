@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Lifetimes",
+  "items": [
+    "Are lifetime parameters ('a) named descriptively if complex?",
+    "Is lifetime elision relied upon for simple cases?",
+    "Are static lifetimes used only when necessary?",
+    "Are struct fields with references properly lifetime-annotated?",
+    "Is the relationship between input and output lifetimes clear?",
+    "Are lifetime issues resolved by design changes (owning data) rather than complex annotations?"
+  ]
+}

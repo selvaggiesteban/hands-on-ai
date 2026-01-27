@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Go Modules",
+  "items": [
+    "Is 'go.mod' present and up-to-date?",
+    "Is 'go.sum' committed to version control?",
+    "Are dependencies updated regularly using 'go get -u'?",
+    "Is 'go mod tidy' run to remove unused dependencies?",
+    "Are semantic versioning tags used for releases?",
+    "Is 'vendor' directory used if reproducible builds are required without network?"
+  ]
+}

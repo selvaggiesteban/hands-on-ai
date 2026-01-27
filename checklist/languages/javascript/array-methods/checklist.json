@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Array Methods",
+  "items": [
+    "Are 'map', 'filter', and 'reduce' used instead of manual loops?",
+    "Is 'find' used for searching single elements?",
+    "Is 'some' or 'every' used for boolean checks?",
+    "Are mutating methods (push, pop, splice) avoided when immutability is required?",
+    "Is 'includes' used instead of 'indexOf' for presence checks?",
+    "Are 'flatMap' used for mapping and flattening in one pass?"
+  ]
+}

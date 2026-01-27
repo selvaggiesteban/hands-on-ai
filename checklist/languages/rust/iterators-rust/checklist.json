@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Iterators",
+  "items": [
+    "Are iterators used instead of C-style for loops?",
+    "Are chainable methods like 'map', 'filter', 'fold' used?",
+    "Is 'collect()' used to convert iterators to collections?",
+    "Are lazy evaluations understood (iterators do nothing until consumed)?",
+    "Is 'into_iter()' vs 'iter()' vs 'iter_mut()' used correctly?",
+    "Are infinite iterators handled with 'take'?"
+  ]
+}

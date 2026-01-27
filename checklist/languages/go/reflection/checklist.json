@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Reflection",
+  "items": [
+    "Is reflection ('reflect' package) used only when strictly necessary?",
+    "Is the performance cost of reflection considered?",
+    "Are type assertions used instead of reflection where possible?",
+    "Is 'reflect.DeepEqual' used for testing complex structures?",
+    "Are struct tags accessed via reflection correctly?",
+    "Is code readability maintained despite reflection use?"
+  ]
+}

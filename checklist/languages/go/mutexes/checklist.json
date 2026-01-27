@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Mutexes",
+  "items": [
+    "Is the mutex locked and unlocked in the same scope (using defer)?",
+    "Is 'RWMutex' used when there are many readers and few writers?",
+    "Are mutexes embedded in structs properly (not copied by value)?",
+    "Is the scope of the lock kept as small as possible?",
+    "Are deadlocks avoided by acquiring locks in a consistent order?",
+    "Is 'sync.Map' considered for specific concurrent map use cases?"
+  ]
+}

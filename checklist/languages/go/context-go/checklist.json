@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Context",
+  "items": [
+    "Is 'context.Context' the first argument in functions that cross API boundaries?",
+    "Is 'context.Background()' used only at the highest level (main, init)?",
+    "Is 'context.TODO()' used when unsure which context to use?",
+    "Is context cancellation propagated to child contexts?",
+    "Are values stored in context immutable and thread-safe?",
+    "Is context used to control timeouts for I/O operations?"
+  ]
+}

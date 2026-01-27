@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Benchmarking",
+  "items": [
+    "Are benchmark functions named starting with 'Benchmark'?",
+    "Do benchmark functions accept '*testing.B' as a parameter?",
+    "Is 'b.ResetTimer()' used if setup code is expensive?",
+    "Are benchmarks run with the '-bench' flag?",
+    "Is 'b.ReportAllocs()' used to track memory allocations?",
+    "Are benchmarks isolated from external side effects?"
+  ]
+}

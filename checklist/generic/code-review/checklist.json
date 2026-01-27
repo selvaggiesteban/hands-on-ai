@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Code Review",
+  "items": [
+    "Is the code clear, concise, and easy to understand?",
+    "Are there any obvious logic errors or edge cases not handled?",
+    "Does the code follow established style and naming conventions?",
+    "Are there adequate tests for the new functionality or fix?",
+    "Is the documentation updated to reflect the changes?",
+    "Are there any performance or security concerns introduced?"
+  ]
+}

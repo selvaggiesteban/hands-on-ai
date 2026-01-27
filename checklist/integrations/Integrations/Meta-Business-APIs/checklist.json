@@ -1,0 +1,12 @@
+{
+  "category": "Integrations",
+  "topic": "Meta Business APIs",
+  "items": [
+    "Is the Access Token valid and refreshed automatically?",
+    "Are webhooks verified using the 'hub.verify_token'?",
+    "Is the payload signature (SHA-256) validated for security?",
+    "Are API version upgrades tracked and implemented?",
+    "Is the 'pages_show_list' and other permissions approved by App Review?",
+    "Are rate limits respected to avoid app blocking?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "Integrations",
+  "topic": "OpenAI API",
+  "items": [
+    "Is the API key protected and not committed to repo?",
+    "Is the organization ID used if applicable?",
+    "Are function calling definitions validated?",
+    "Is cost monitoring enabled for the API usage?",
+    "Are embeddings cached to reduce costs?",
+    "Is retry logic implemented for 429 and 5xx errors?"
+  ]
+}

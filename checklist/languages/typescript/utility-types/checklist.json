@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Utility Types",
+  "items": [
+    "Are 'Partial', 'Required', 'Readonly' used for type transformations?",
+    "Are 'Pick' and 'Omit' used to create subtypes?",
+    "Is 'Record' used for defining object maps?",
+    "Are 'Parameters' and 'ReturnType' used to extract function types?",
+    "Is 'NonNullable' used to remove null/undefined?",
+    "Are 'Awaited' and 'InstanceType' used correctly?"
+  ]
+}

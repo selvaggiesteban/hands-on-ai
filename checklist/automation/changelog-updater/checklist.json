@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Changelog Updater",
+  "items": [
+    "Are commit messages parsed correctly to categorize changes (e.g., feat, fix, chore)?",
+    "Is the changelog formatted according to Keep a Changelog standards?",
+    "Does the tool handle version bumping automatically based on change types?",
+    "Is there a preview mode to review changes before committing to the changelog?",
+    "Are links to issues or PRs included for each entry?",
+    "Is the updater integrated into the CI/CD release pipeline?"
+  ]
+}

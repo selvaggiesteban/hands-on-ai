@@ -1,0 +1,12 @@
+{
+  "category": "Web Servers",
+  "topic": "Apache",
+  "items": [
+    "Is 'mod_security' enabled for WAF protection?",
+    "Is 'mod_evasive' configured for DoS protection?",
+    "Are directory listings disabled ('Options -Indexes')?",
+    "Is '.htaccess' usage minimized for performance (move to vhosts)?",
+    "Are server tokens hidden ('ServerTokens Prod')?",
+    "Is HTTP/2 enabled?"
+  ]
+}

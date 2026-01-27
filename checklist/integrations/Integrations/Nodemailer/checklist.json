@@ -1,0 +1,12 @@
+{
+  "category": "Integrations",
+  "topic": "Nodemailer",
+  "items": [
+    "Is the transport configured with 'secure: true' (TLS)?",
+    "Are SMTP credentials loaded from environment variables?",
+    "Is 'dkim' signing configured for better deliverability?",
+    "Are attachments streamed instead of loaded into memory?",
+    "Is connection pooling enabled for high throughput?",
+    "Are email templates separated from logic?"
+  ]
+}

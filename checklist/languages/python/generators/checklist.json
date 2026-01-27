@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Generators",
+  "items": [
+    "Are generators used for lazy evaluation of large sequences?",
+    "Is 'yield from' used for delegating to sub-generators?",
+    "Are generator expressions used for memory efficiency?",
+    "Is the single-use nature of generators understood?",
+    "Are generators used to implement infinite sequences?",
+    "Is 'send()', 'throw()', and 'close()' usage understood?"
+  ]
+}

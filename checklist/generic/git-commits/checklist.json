@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Git Commits",
+  "items": [
+    "Is the commit message clear and descriptive?",
+    "Does the commit follow the Conventional Commits specification?",
+    "Is the commit atomic (one logical change per commit)?",
+    "Are all temporary debugging statements (e.g., console.log) removed?",
+    "Is the commit associated with a task or issue ID?",
+    "Do all tests pass locally before committing?"
+  ]
+}

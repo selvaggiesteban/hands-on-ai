@@ -1,0 +1,12 @@
+{
+  "category": "Setup",
+  "topic": "Deliverables",
+  "items": [
+    "Are all deliverable types (code, docs, design) defined?",
+    "Is the acceptance criteria for each deliverable specified?",
+    "Are the delivery formats (PDF, zip, docker image) agreed upon?",
+    "Is the delivery schedule aligned with the roadmap?",
+    "Are there templates for document deliverables?",
+    "Is the review and approval process for deliverables established?"
+  ]
+}

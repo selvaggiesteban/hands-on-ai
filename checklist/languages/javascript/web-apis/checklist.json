@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Web APIs",
+  "items": [
+    "Is 'localStorage' / 'sessionStorage' used for small amounts of data?",
+    "Is 'IndexedDB' used for larger structured data?",
+    "Is 'IntersectionObserver' used for lazy loading or visibility checks?",
+    "Is 'Canvas API' used efficiently (batching draws)?",
+    "Is 'History API' used for client-side routing?",
+    "Are feature detection checks performed before using modern APIs?"
+  ]
+}

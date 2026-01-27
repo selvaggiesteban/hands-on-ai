@@ -1,0 +1,12 @@
+{
+  "category": "CMS",
+  "topic": "Elementor",
+  "items": [
+    "Are custom widgets optimized for performance?",
+    "Is the DOM size monitored to prevent 'excessive DOM size' warnings?",
+    "Are global fonts and colors used for consistency?",
+    "Is 'Elementor Loading' issue mitigated with proper caching?",
+    "Are unused widgets disabled?",
+    "Is mobile responsiveness verified manually?"
+  ]
+}

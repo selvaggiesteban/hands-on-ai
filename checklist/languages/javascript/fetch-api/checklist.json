@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Fetch API",
+  "items": [
+    "Is 'fetch' used for network requests?",
+    "Is the response status checked (fetch doesn't reject on 4xx/5xx)?",
+    "Are credentials (cookies) handled correctly ('credentials: include')?",
+    "Is 'AbortController' used to cancel pending requests?",
+    "Are headers set correctly (e.g., 'Content-Type: application/json')?",
+    "Is JSON parsing handled with '.json()' and error checking?"
+  ]
+}

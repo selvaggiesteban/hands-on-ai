@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Classes",
+  "items": [
+    "Are classes used for creating objects with shared behavior?",
+    "Is inheritance used sparingly in favor of composition?",
+    "Are 'constructor' methods used for initialization?",
+    "Are 'static' methods used for utility functions related to the class?",
+    "Are getters and setters used for encapsulation?",
+    "Is 'super' called correctly in derived classes?"
+  ]
+}

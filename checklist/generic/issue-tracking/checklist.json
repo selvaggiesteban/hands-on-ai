@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Issue Tracking",
+  "items": [
+    "Are issues created with a clear template?",
+    "Are labels used for categorization (bug, enhancement)?",
+    "Is priority and severity assigned?",
+    "Are reproduction steps included for bugs?",
+    "Is the assignee clear?",
+    "Are issues linked to PRs?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Strict Mode",
+  "items": [
+    "Is 'strict: true' enabled in tsconfig.json?",
+    "Is 'noImplicitAny' resolved everywhere?",
+    "Is 'strictNullChecks' handled with unions (Type | null)?",
+    "Is 'strictPropertyInitialization' satisfied in classes?",
+    "Is 'noImplicitThis' handled?",
+    "Is 'useUnknownInCatchVariables' enabled?"
+  ]
+}

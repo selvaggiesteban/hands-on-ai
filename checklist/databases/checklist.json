@@ -1,0 +1,12 @@
+{
+  "category": "Databases",
+  "topic": "Database Management",
+  "items": [
+    "Is the database schema normalized to at least 3NF where appropriate?",
+    "Are indexes created for frequently queried columns to optimize performance?",
+    "Is database access restricted to authorized applications and users only?",
+    "Are automated daily backups configured and verified regularly?",
+    "Is sensitive data encrypted at the column or table level?",
+    "Are slow queries monitored and analyzed for optimization opportunities?"
+  ]
+}

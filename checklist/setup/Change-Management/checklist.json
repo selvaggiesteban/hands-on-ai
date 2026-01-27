@@ -1,0 +1,12 @@
+{
+  "category": "Setup",
+  "topic": "Change Management",
+  "items": [
+    "Is there a formal process for requesting changes?",
+    "Are changes impact-assessed before approval?",
+    "Is the approval hierarchy defined?",
+    "Are changes communicated to all affected stakeholders?",
+    "Is the documentation updated to reflect changes?",
+    "Is there a rollback plan for changes?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "Languages",
+  "topic": "TypeScript Standards",
+  "items": [
+    "Is 'strict' mode enabled in tsconfig.json?",
+    "Are interfaces or types used for all data structures and API responses?",
+    "Is the 'any' type avoided in favor of more specific types or 'unknown'?",
+    "Are enums or literal types used for fixed sets of values?",
+    "Is the project configured to fail the build on TypeScript errors?",
+    "Are decorators used consistently if required by the framework (e.g., NestJS, Angular)?"
+  ]
+}

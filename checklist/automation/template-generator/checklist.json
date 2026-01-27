@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Template Generator",
+  "items": [
+    "Are templates parameterized correctly?",
+    "Is a template engine (Mustache, Jinja2) used?",
+    "Are templates stored in a central repository?",
+    "Is the output validated against syntax rules?",
+    "Are partials used for reusable components?",
+    "Is there a mechanism to override templates?"
+  ]
+}

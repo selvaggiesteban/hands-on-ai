@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Exception Handling",
+  "items": [
+    "Are specific exception types caught (avoiding bare 'except:')?",
+    "Are custom exceptions derived from 'Exception' (not 'BaseException')?",
+    "Is 'finally' used for cleanup code?",
+    "Are exceptions chained using 'raise ... from ...'?",
+    "Is logic flow controlled by exceptions avoided where possible (EAFP vs LBYL)?",
+    "Are error messages descriptive and helpful?"
+  ]
+}

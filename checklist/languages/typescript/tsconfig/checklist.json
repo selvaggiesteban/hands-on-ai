@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "TSConfig",
+  "items": [
+    "Is 'target' set to an appropriate ECMAScript version?",
+    "Is 'lib' configured to include necessary environment types (DOM, ESNext)?",
+    "Is 'outDir' and 'rootDir' configured for build output?",
+    "Is 'incremental' builds enabled for faster compile times?",
+    "Are 'types' and 'typeRoots' configured correctly?",
+    "Is 'skipLibCheck' enabled to speed up compilation?"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "category": "Cloud",
+  "topic": "Cloud Infrastructure",
+  "items": [
+    "Is Infrastructure as Code (IaC) used for all resource provisioning?",
+    "Are resources deployed across multiple Availability Zones for high availability?",
+    "Is the Principle of Least Privilege (PoLP) applied to IAM roles and policies?",
+    "Are auto-scaling policies configured based on real-time metrics?",
+    "Is cost monitoring and alerting set up to prevent budget overruns?",
+    "Are cloud-native monitoring and logging tools (e.g., CloudWatch, Stackdriver) enabled?"
+  ]
+}

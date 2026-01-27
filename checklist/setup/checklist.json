@@ -1,0 +1,12 @@
+{
+  "category": "Setup",
+  "topic": "Development Environment Setup",
+  "items": [
+    "Is the environment setup automated (e.g., using Docker or a script)?",
+    "Are all required system dependencies documented?",
+    "Is the .env.example file provided and up-to-date?",
+    "Are IDE configurations (e.g., .vscode) shared for consistency?",
+    "Is the local database seeded with sample data for development?",
+    "Are there clear instructions for running tests locally?"
+  ]
+}

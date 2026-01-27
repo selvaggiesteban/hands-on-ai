@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Async Rust",
+  "items": [
+    "Is 'tokio' or 'async-std' used consistently as the runtime?",
+    "Are async functions awaited properly?",
+    "Is 'select!' used for waiting on multiple futures?",
+    "Are blocking operations avoided inside async blocks?",
+    "Is 'pin!' used when futures need to be pinned to memory?",
+    "Are async traits handled using 'async-trait' crate if necessary?"
+  ]
+}

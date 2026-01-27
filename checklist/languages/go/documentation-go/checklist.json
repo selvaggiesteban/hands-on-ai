@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Documentation",
+  "items": [
+    "Do exported types, functions, and methods have doc comments?",
+    "Do doc comments start with the name of the exported identifier?",
+    "Are package comments present in at least one file per package?",
+    "Are examples provided for complex functions using 'Example' test functions?",
+    "Is 'godoc' formatting rules followed?",
+    "Are deprecated identifiers marked with '// Deprecated:'?"
+  ]
+}

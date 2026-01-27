@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Traits",
+  "items": [
+    "Are traits used to define shared behavior?",
+    "Is 'impl Trait' used for return types where possible?",
+    "Are trait bounds used for generic functions?",
+    "Is the orphan rule respected?",
+    "Are common traits (Debug, Clone, Default) derived automatically?",
+    "Is dynamic dispatch (dyn Trait) used only when necessary?"
+  ]
+}

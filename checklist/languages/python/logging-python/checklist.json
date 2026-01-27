@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Logging",
+  "items": [
+    "Is the standard 'logging' module used?",
+    "Are loggers configured with appropriate names (usually __name__)?",
+    "Are handlers and formatters configured centrally?",
+    "Is string formatting done lazily by the logger (logging.info('%s', var))?",
+    "Are exceptions logged with 'exc_info=True' or 'logging.exception'?",
+    "Is log rotation configured for file handlers?"
+  ]
+}

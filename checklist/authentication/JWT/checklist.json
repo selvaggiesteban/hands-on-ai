@@ -1,0 +1,12 @@
+{
+  "category": "Authentication",
+  "topic": "JWT",
+  "items": [
+    "Is a strong secret or private key used for signing?",
+    "Is the algorithm set explicitly to prevent 'None' algorithm attacks?",
+    "Are tokens short-lived (e.g., 15 minutes)?",
+    "Is a refresh token mechanism implemented?",
+    "Are sensitive data excluded from the payload?",
+    "Is the 'iss' (issuer) and 'aud' (audience) claim verified?"
+  ]
+}

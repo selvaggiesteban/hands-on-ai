@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Release Creator",
+  "items": [
+    "Is semantic versioning enforced?",
+    "Is the changelog updated automatically?",
+    "Are git tags created and pushed?",
+    "Are release artifacts (binaries, docker images) built?",
+    "Is the release published to package registries (npm, pypi)?",
+    "Are release notes posted to communication channels?"
+  ]
+}

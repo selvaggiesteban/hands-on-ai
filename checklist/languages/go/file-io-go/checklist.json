@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "File I/O",
+  "items": [
+    "Is 'os.OpenFile' used with appropriate flags?",
+    "Are file handles closed using 'defer' immediately after opening?",
+    "Is 'io.Copy' or 'io.CopyBuffer' used for efficient data transfer?",
+    "Is 'bufio' used for buffered I/O operations?",
+    "Are file permissions set securely (e.g., 0600 for secrets)?",
+    "Is 'path/filepath' used for cross-platform path manipulation?"
+  ]
+}

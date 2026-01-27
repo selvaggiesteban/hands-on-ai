@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Prototypes",
+  "items": [
+    "Is prototype modification avoided (monkey patching)?",
+    "Is inheritance implemented correctly using prototype chain (or classes)?",
+    "Are 'proto' and '__proto__' avoided in favor of 'Object.getPrototypeOf'?",
+    "Is 'Object.create' used for cleaner inheritance?",
+    "Are prototype properties distinct from instance properties?",
+    "Is the performance impact of long prototype chains considered?"
+  ]
+}

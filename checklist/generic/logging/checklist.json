@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Logging",
+  "items": [
+    "Is logging implemented at appropriate levels?",
+    "Is PII redacted?",
+    "Are logs centralized?",
+    "Is the log format parseable?",
+    "Are logs retained for an appropriate period?",
+    "Is log volume monitored?"
+  ]
+}

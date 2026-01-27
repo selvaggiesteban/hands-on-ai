@@ -1,0 +1,12 @@
+{
+  "category": "JavaScript",
+  "topic": "Closures",
+  "items": [
+    "Are closures used to create private state?",
+    "Is memory usage monitored when using closures extensively?",
+    "Are closures used for partial application or currying?",
+    "Is the scope chain understood to avoid unexpected variable shadowing?",
+    "Are loops with closures handled correctly (using 'let' for block scope)?",
+    "Are stale closures avoided in React hooks (using dependency arrays)?"
+  ]
+}

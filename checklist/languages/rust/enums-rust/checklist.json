@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Enums",
+  "items": [
+    "Are enums used to represent state machines?",
+    "Are enum variants holding data used to replace complex class hierarchies?",
+    "Is 'match' used exhaustively to handle all enum variants?",
+    "Is 'if let' used for single variant matching?",
+    "Are generic enums (like Option and Result) leveraged?",
+    "Is '#[non_exhaustive]' used for library enums tailored for future expansion?"
+  ]
+}

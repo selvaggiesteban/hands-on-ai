@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Async/Await",
+  "items": [
+    "Are async function return types explicitly typed as 'Promise<T>'?",
+    "Is 'await' usage verified for null/undefined if 'strictNullChecks' is on?",
+    "Are error types in catch blocks handled (defaulting to 'unknown' or 'any')?",
+    "Is 'Promise.all' typed correctly using tuple types?",
+    "Are async iterators typed correctly?",
+    "Is the 'Awaited<T>' utility type used where necessary?"
+  ]
+}

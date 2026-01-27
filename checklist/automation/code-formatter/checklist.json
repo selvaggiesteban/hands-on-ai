@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Code Formatter",
+  "items": [
+    "Is a configuration file (e.g., .prettierrc, .clang-format) present in the root directory?",
+    "Does the formatter run automatically on file save in the IDE?",
+    "Is there a pre-commit hook to ensure all staged files are formatted?",
+    "Is the line width standardized (e.g., 80 or 120 characters) across the project?",
+    "Are indentation rules (spaces vs. tabs) consistent and enforced?",
+    "Does the CI pipeline fail if code is not properly formatted?"
+  ]
+}

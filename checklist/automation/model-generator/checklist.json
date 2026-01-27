@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Model Generator",
+  "items": [
+    "Are models generated from schema definitions (SQL, OpenAPI)?",
+    "Are validation rules included in the generated models?",
+    "Are relationships (OR/M) mapped correctly?",
+    "Is boiler-plate code minimized?",
+    "Are types/interfaces generated alongside models?",
+    "Is the generator idempotent?"
+  ]
+}

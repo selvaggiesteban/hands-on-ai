@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Types vs Interfaces",
+  "items": [
+    "Are 'interfaces' used for defining object shapes and public APIs (extensibility)?",
+    "Are 'type' aliases used for unions, primitives, and tuples?",
+    "Is consistency maintained (pick one strategy for objects)?",
+    "Are interfaces merged (declaration merging) where appropriate?",
+    "Are types used for mapped types and conditional types?",
+    "Is the performance difference (negligible) ignored in favor of semantics?"
+  ]
+}

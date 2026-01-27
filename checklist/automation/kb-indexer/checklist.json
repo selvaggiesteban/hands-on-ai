@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "KB Indexer",
+  "items": [
+    "Is the indexing process incremental (only new/changed files)?",
+    "Are vector embeddings generated using a consistent model?",
+    "Is the vector database (Chroma, Pinecone) backed up?",
+    "Are stale entries removed from the index?",
+    "Is metadata (source, date) preserved with embeddings?",
+    "Is search latency monitored?"
+  ]
+}

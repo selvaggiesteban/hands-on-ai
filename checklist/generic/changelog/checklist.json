@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Changelog",
+  "items": [
+    "Is the 'Keep a Changelog' format followed?",
+    "Are changes grouped by type (Added, Changed, Fixed)?",
+    "Is the date and version number included for each release?",
+    "Are breaking changes highlighted?",
+    "Are contributors acknowledged?",
+    "Is the changelog easy to find?"
+  ]
+}

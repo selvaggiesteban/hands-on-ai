@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Package Management",
+  "items": [
+    "Is a dependency manager (pip, poetry, pipenv) used?",
+    "Is 'requirements.txt' or 'pyproject.toml' kept up-to-date?",
+    "Are virtual environments used to isolate dependencies?",
+    "Are packages structured with '__init__.py' files?",
+    "Is a proper build backend configured (e.g., setuptools, poetry-core)?",
+    "Are unused dependencies removed regularly?"
+  ]
+}

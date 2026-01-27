@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Accessibility",
+  "items": [
+    "Is the application navigable via keyboard?",
+    "Are 'alt' attributes present on all images?",
+    "Is color contrast sufficient (WCAG AA)?",
+    "Are semantic HTML tags used?",
+    "Are ARIA labels used where semantic HTML is insufficient?",
+    "Is the application tested with a screen reader?"
+  ]
+}

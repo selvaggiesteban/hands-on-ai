@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Skill Creator",
+  "items": [
+    "Is the skill structure standard (inputs, outputs, logic)?",
+    "Are unit tests generated for the new skill?",
+    "Is the skill registered in the system catalog?",
+    "Are dependencies defined explicitly?",
+    "Is documentation generated from skill metadata?",
+    "Is the skill compatible with the agent framework?"
+  ]
+}

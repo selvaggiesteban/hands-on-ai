@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Generics",
+  "items": [
+    "Are generic constraints ('extends') used to limit types?",
+    "Are default type parameters provided where helpful?",
+    "Are generics used to link input and output types?",
+    "Is 'unknown' preferred over 'any' for generic fallbacks?",
+    "Are generic classes and interfaces used for reusable data structures?",
+    "Is type inference relied upon to avoid excessive angle brackets?"
+  ]
+}

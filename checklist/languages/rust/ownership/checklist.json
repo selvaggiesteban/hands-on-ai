@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Ownership",
+  "items": [
+    "Is the single owner rule respected?",
+    "Is move semantics understood for non-Copy types?",
+    "Is 'Clone' implemented for types that need explicit duplication?",
+    "Are values dropped correctly when they go out of scope?",
+    "Is 'Rc' or 'Arc' used for shared ownership?",
+    "Are ownership transfers explicit in function signatures?"
+  ]
+}

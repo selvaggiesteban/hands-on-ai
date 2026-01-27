@@ -1,0 +1,12 @@
+{
+  "category": "Languages",
+  "topic": "Go Standards",
+  "items": [
+    "Is the code formatted using 'gofmt'?",
+    "Are errors handled explicitly after every function call that returns one?",
+    "Is the project structured according to standard Go project layouts?",
+    "Are context objects used for cancellation and timeouts in networked services?",
+    "Are interfaces used to promote decoupling and testability?",
+    "Does the code pass 'go vet' and 'staticcheck'?"
+  ]
+}

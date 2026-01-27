@@ -1,0 +1,12 @@
+{
+  "category": "Testing",
+  "topic": "Jest",
+  "items": [
+    "Are tests isolated and independent?",
+    "Are snapshots committed and reviewed?",
+    "Is 'describe' used to group related tests?",
+    "Are mocks reset between tests (resetMocks: true)?",
+    "Are async tests properly awaited?",
+    "Is coverage reporting enabled and monitored?"
+  ]
+}

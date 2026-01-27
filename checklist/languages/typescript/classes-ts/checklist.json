@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Classes",
+  "items": [
+    "Are access modifiers (public, private, protected) used explicitly?",
+    "Are 'readonly' properties used for immutable state?",
+    "Is 'implements' used to ensure classes adhere to interfaces?",
+    "Are abstract classes used for base implementations?",
+    "Is parameter properties syntax (public name: string in constructor) used correctly?",
+    "Are getters and setters typed consistent with their property?"
+  ]
+}

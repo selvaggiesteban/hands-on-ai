@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "JSON Handling",
+  "items": [
+    "Are struct tags used to define JSON field names?",
+    "Is 'omitempty' used to hide empty fields?",
+    "Is 'json.Decoder' used for streams and 'json.Unmarshal' for byte slices?",
+    "Are unknown fields handled (either ignored or flagged)?",
+    "Are custom 'MarshalJSON' and 'UnmarshalJSON' methods implemented if needed?",
+    "Is input validation performed after unmarshaling?"
+  ]
+}

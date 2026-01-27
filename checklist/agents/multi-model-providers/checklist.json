@@ -1,0 +1,12 @@
+{
+  "category": "Agents",
+  "topic": "Multi-Model Providers",
+  "items": [
+    "Is the Anthropic provider configured with a valid API key?",
+    "Is the OpenAI provider configured with a valid API key?",
+    "Is the Google Gemini provider configured with a valid API key?",
+    "Are the required CLI tools (claude, codex, gemini) installed?",
+    "Are the official provider repositories cloned?",
+    "Are the community skills repositories cloned?"
+  ]
+}

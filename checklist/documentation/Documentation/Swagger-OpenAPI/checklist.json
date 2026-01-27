@@ -1,0 +1,12 @@
+{
+  "category": "Documentation",
+  "topic": "Swagger/OpenAPI",
+  "items": [
+    "Is the OpenAPI spec valid (version 3.0+)?",
+    "Are all endpoints documented with request/response examples?",
+    "Are authentication methods defined?",
+    "Are schema definitions reused ($ref)?",
+    "Is the spec generated from code where possible?",
+    "Is the 'Try it out' feature enabled?"
+  ]
+}

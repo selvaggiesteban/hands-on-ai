@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Skill Sync",
+  "items": [
+    "Are skills synced across all agents?",
+    "Are conflict resolution strategies defined?",
+    "Is version compatibility checked?",
+    "Are deprecated skills flagged or removed?",
+    "Is the sync process atomic?",
+    "Are logs generated for sync operations?"
+  ]
+}

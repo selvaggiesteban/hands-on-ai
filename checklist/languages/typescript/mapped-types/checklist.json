@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Mapped Types",
+  "items": [
+    "Are mapped types used to create variations of existing types (Readonly, Partial)?",
+    "Is 'keyof' used correctly to iterate over keys?",
+    "Are modifiers (+/- readonly, ?) used to add or remove properties?",
+    "Is 'as' clause used for key remapping (TS 4.1+)?",
+    "Are mapped types used to enforce consistency across related types?",
+    "Are built-in mapped types (Pick, Omit, Record) used?"
+  ]
+}

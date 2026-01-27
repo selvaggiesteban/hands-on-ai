@@ -1,0 +1,12 @@
+{
+  "category": "Project Meta",
+  "topic": "Project Standards and Security",
+  "items": [
+    "Is the project's license clearly defined and present?",
+    "Are there contribution guidelines (CONTRIBUTING.md) for developers?",
+    "Is the security threat model (threat-model.yaml) documented and followed?",
+    "Are project dependencies audited for licensing compliance?",
+    "Is there a clear versioning strategy (e.g., Semantic Versioning)?",
+    "Are project goals and roadmap clearly communicated to stakeholders?"
+  ]
+}

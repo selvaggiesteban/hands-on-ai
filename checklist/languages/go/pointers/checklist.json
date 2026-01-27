@@ -1,0 +1,12 @@
+{
+  "category": "Go",
+  "topic": "Pointers",
+  "items": [
+    "Are pointers used to share data or allow modification?",
+    "Are pointers avoided for small structs (pass by value is often faster)?",
+    "Is nil pointer dereference checked?",
+    "Are pointers to stack-allocated variables safe (escape analysis handles this)?",
+    "Is pointer arithmetic avoided (Go generally forbids it)?",
+    "Are receiver types (pointer vs value) chosen correctly for methods?"
+  ]
+}

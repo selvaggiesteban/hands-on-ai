@@ -1,0 +1,12 @@
+{
+  "category": "Automation",
+  "topic": "Mock Generator",
+  "items": [
+    "Are mocks generated based on interfaces or types?",
+    "Are mocks updated automatically when types change?",
+    "Are default values provided for all properties?",
+    "Can mock behavior be customized per test?",
+    "Are circular dependencies handled?",
+    "Is the generator integrated with the testing framework?"
+  ]
+}

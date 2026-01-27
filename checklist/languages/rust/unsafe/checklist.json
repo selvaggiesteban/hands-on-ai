@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "Unsafe",
+  "items": [
+    "Is 'unsafe' code kept to an absolute minimum?",
+    "Are unsafe blocks justified with comments?",
+    "Are safe wrappers provided around unsafe code?",
+    "Are raw pointers dereferenced only inside unsafe blocks?",
+    "Is the contract of unsafe functions documented?",
+    "Is Miri used to detect undefined behavior in unsafe code?"
+  ]
+}

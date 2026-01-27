@@ -1,0 +1,12 @@
+{
+  "category": "TypeScript",
+  "topic": "Modules",
+  "items": [
+    "Is 'export type' used to export types explicitly?",
+    "Are 'import type' used to import types (erased at runtime)?",
+    "Are ES modules syntax used consistently?",
+    "Is 'moduleResolution' set to 'node' or 'bundler'?",
+    "Are path aliases (tsconfig 'paths') used for cleaner imports?",
+    "Is 'allowSyntheticDefaultImports' configured if needed?"
+  ]
+}

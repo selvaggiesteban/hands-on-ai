@@ -1,0 +1,12 @@
+{
+  "category": "Rust",
+  "topic": "FFI",
+  "items": [
+    "Is 'extern \"C\"' used for C-compatible functions?",
+    "Are types explicitly repr(C)?",
+    "Is 'unsafe' block minimized around FFI calls?",
+    "Are pointers managed correctly to prevent leaks?",
+    "Is 'bindgen' used to generate bindings?",
+    "Are strings converted correctly between Rust (UTF-8) and C (null-terminated) strings?"
+  ]
+}

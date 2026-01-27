@@ -1,0 +1,12 @@
+{
+  "category": "Documentation",
+  "topic": "Project Documentation",
+  "items": [
+    "Is there a comprehensive README.md in the root directory?",
+    "Are all setup and installation steps clearly documented and verified?",
+    "Is the API documentation (e.g., Swagger, OpenAPI) up-to-date?",
+    "Are architecture decisions recorded (e.g., ADRs)?",
+    "Is the codebase documented with inline comments where logic is complex?",
+    "Is a changelog maintained to track version history and updates?"
+  ]
+}

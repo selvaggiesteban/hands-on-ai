@@ -1,0 +1,12 @@
+{
+  "category": "Generic",
+  "topic": "Error Handling",
+  "items": [
+    "Are error messages clear and actionable for the user?",
+    "Are technical details hidden from end-users?",
+    "Is a global error boundary implemented?",
+    "Are errors logged with context for debugging?",
+    "Is there a recovery mechanism for critical errors?",
+    "Are HTTP status codes used correctly?"
+  ]
+}

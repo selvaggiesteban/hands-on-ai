@@ -1,0 +1,12 @@
+{
+  "category": "Logging",
+  "topic": "Observability and Logging",
+  "items": [
+    "Are logs emitted in a structured format (e.g., JSON)?",
+    "Do logs include correlation IDs to trace requests across services?",
+    "Are logs categorized by severity levels (DEBUG, INFO, WARN, ERROR)?",
+    "Is sensitive information (PII, credentials) strictly excluded from logs?",
+    "Are logs aggregated in a central system (e.g., ELK, Splunk, Datadog)?",
+    "Are alerts configured for critical log patterns or error spikes?"
+  ]
+}

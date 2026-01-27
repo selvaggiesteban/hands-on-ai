@@ -1,0 +1,12 @@
+{
+  "category": "Python",
+  "topic": "Async/Await",
+  "items": [
+    "Is 'asyncio' used as the standard async library?",
+    "Are blocking I/O operations avoided inside async functions?",
+    "Is 'asyncio.gather' used for concurrent execution?",
+    "Are tasks properly cancelled when no longer needed?",
+    "Is 'aiohttp' or similar used for async HTTP requests?",
+    "Are async generators used for streaming data?"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "example_matrix_target": "skill_combinations_for_complex_tasks",
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "task_examples": [
+    {
+      "task_id": "TS-001",
+      "task_description": "Debug a flaky, intermittent test failure in an asynchronous UI component.",
+      "skill_combination": [
+        "skills/systematic-debugging/skill.md",
+        "skills/systematic-debugging/root-cause-tracing.md",
+        "skills/systematic-debugging/condition-based-waiting.md",
+        "skills/test-driven-development/skill.md",
+        "skills/frontend/react/skill.md"
+      ]
+    },
+    {
+      "task_id": "RF-001",
+      "task_description": "Refactor a monolithic backend service into a set of microservices.",
+      "skill_combination": [
+        "skills/backend/python/skill.md",
+        "skills/backend/fastapi/agents.md",
+        "skills/cloud/aws/skill.md",
+        "skills/databases/sql/skill.md",
+        "skills/doc-coauthoring/skill.md"
+      ]
+    },
+    {
+      "task_id": "PM-001",
+      "task_description": "Create a complete project plan and execution strategy for a new client.",
+      "skill_combination": [
+        "skills/writing-plans/skill.md",
+        "skills/project_meta/planning/plan.json",
+        "skills/executing-plans/skill.md",
+        "skills/dispatching-parallel-agents/skill.md",
+        "skills/verification-before-completion/skill.md"
+      ]
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+---
+name: skill
+description: Use when [describe the use case for this skill].
+---
+
 ﻿---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session

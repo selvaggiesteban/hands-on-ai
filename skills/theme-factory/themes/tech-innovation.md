@@ -1,20 +1,14 @@
-﻿# Tech Innovation
+---
+name: tech-innovation
+description: Use when applying the Tech Innovation visual style (neon blues and dark grays) to a frontend component or application.
+---
 
-A bold and modern theme with high-contrast colors perfect for cutting-edge technology presentations.
+# Tech Innovation
+
+High-tech, futuristic aesthetic for cutting-edge software.
 
 ## Color Palette
 
-- **Electric Blue**: `#0066ff` - Vibrant primary accent
-- **Neon Cyan**: `#00ffff` - Bright highlight color
-- **Dark Gray**: `#1e1e1e` - Deep backgrounds
-- **White**: `#ffffff` - Clean text and contrast
-
-## Typography
-
-- **Headers**: DejaVu Sans Bold
-- **Body Text**: DejaVu Sans
-
-## Best Used For
-
-Tech startups, software launches, innovation showcases, AI/ML presentations, digital transformation content.
-
+- **Cyber Blue**: `#00bcd4` - Primary glow
+- **Circuit Gray**: `#37474f` - Backgrounds
+- **Neon Green**: `#00e676` - Success states

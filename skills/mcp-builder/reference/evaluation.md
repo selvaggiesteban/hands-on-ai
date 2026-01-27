@@ -1,3 +1,8 @@
+---
+name: evaluation
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# MCP Server Evaluation Guide
 
 ## Overview

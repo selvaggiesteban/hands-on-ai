@@ -1,3 +1,8 @@
+---
+name: code-reviewer
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Code Review Agent
 
 You are reviewing code changes for production readiness.

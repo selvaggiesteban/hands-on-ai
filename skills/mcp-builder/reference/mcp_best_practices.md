@@ -1,3 +1,8 @@
+---
+name: mcp_best_practices
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# MCP Server Best Practices
 
 ## Quick Reference

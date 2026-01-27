@@ -1,3 +1,8 @@
+---
+name: code-quality-reviewer-prompt
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Code Quality Reviewer Prompt Template
 
 Use this template when dispatching a code quality reviewer subagent.

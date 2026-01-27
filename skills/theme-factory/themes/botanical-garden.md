@@ -1,20 +1,14 @@
-﻿# Botanical Garden
+---
+name: botanical-garden
+description: Use when applying the Botanical Garden visual style (organic greens and earth tones) to a frontend component or application.
+---
 
-A fresh and organic theme featuring vibrant garden-inspired colors for lively presentations.
+# Botanical Garden
+
+A fresh and organic theme inspired by nature, using lush greens and earthy tones.
 
 ## Color Palette
 
-- **Fern Green**: `#4a7c59` - Rich natural green
-- **Marigold**: `#f9a620` - Bright floral accent
-- **Terracotta**: `#b7472a` - Earthy warm tone
-- **Cream**: `#f5f3ed` - Soft neutral backgrounds
-
-## Typography
-
-- **Headers**: DejaVu Serif Bold
-- **Body Text**: DejaVu Sans
-
-## Best Used For
-
-Garden centers, food presentations, farm-to-table content, botanical brands, natural products.
-
+- **Leaf Green**: `#4caf50` - Primary action color
+- **Soil Brown**: `#795548` - Accents and borders
+- **Cream**: `#f5f5f5` - Soft backgrounds

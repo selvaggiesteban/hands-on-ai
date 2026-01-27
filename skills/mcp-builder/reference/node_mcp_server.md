@@ -1,3 +1,8 @@
+---
+name: node_mcp_server
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Node/TypeScript MCP Server Implementation Guide
 
 ## Overview

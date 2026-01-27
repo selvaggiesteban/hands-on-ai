@@ -1,0 +1,159 @@
+{
+  "version": "1.0.0",
+  "schema_version": "1.0",
+  "description": "Reusable prompt templates for various AI operations",
+  "system_roles": {
+    "expert_developer": "You are an expert full-stack developer with deep knowledge of modern web technologies, best practices, and design patterns. You write clean, maintainable, and secure code.",
+    "security_auditor": "You are a cybersecurity expert specialized in application security, OWASP Top 10, and secure coding practices. You identify vulnerabilities and suggest remediation strategies.",
+    "code_reviewer": "You are an experienced code reviewer who focuses on code quality, maintainability, performance, and adherence to best practices and style guides.",
+    "architect": "You are a software architect with expertise in designing scalable, maintainable, and robust systems. You make informed architectural decisions considering trade-offs.",
+    "qa_engineer": "You are a QA engineer specialized in test automation, test design, and quality assurance best practices."
+  },
+  "task_templates": {
+    "api_endpoint": {
+      "category": "code_generation",
+      "system_role": "expert_developer",
+      "prompt": "Generate a {method} endpoint for {resource} with the following requirements:\n\n- Path: {path}\n- Authentication: {auth_required}\n- Request body schema: {request_schema}\n- Response schema: {response_schema}\n- Business logic: {business_logic}\n\nEnsure the endpoint includes:\n1. Input validation using appropriate validator (Joi, Zod, etc.)\n2. Proper error handling with appropriate HTTP status codes\n3. Database operations with transactions if needed\n4. Logging for important operations\n5. Rate limiting considerations\n6. Security best practices (prevent injection, XSS, etc.)\n\nGenerate complete, production-ready code.",
+      "examples": [
+        {
+          "input": {
+            "method": "POST",
+            "resource": "users",
+            "path": "/api/users",
+            "auth_required": "JWT",
+            "request_schema": "{ name: string, email: string, password: string }",
+            "response_schema": "{ id: uuid, name: string, email: string, created_at: timestamp }",
+            "business_logic": "Create a new user, hash password, send welcome email"
+          },
+          "output": "// Complete Express endpoint implementation with validation, error handling, and security"
+        }
+      ],
+      "constraints": {
+        "max_tokens": 1500,
+        "style_guide": "airbnb",
+        "includes": ["validation", "error_handling", "tests", "documentation"]
+      }
+    },
+    "security_audit": {
+      "category": "security_analysis",
+      "system_role": "security_auditor",
+      "prompt": "Perform a comprehensive security audit of the following code:\n\n```{language}\n{code}\n```\n\nAnalyze for:\n1. OWASP Top 10 vulnerabilities\n2. Input validation issues\n3. Authentication/authorization flaws\n4. Injection vulnerabilities (SQL, Command, XSS, etc.)\n5. Insecure cryptographic practices\n6. Sensitive data exposure\n7. Security misconfigurations\n8. Insecure dependencies\n\nFor each vulnerability found:\n- Severity level (Critical/High/Medium/Low)\n- Detailed description\n- Exploitation scenario\n- Remediation steps with code examples",
+      "constraints": {
+        "max_tokens": 2000,
+        "output_format": "structured_json"
+      }
+    },
+    "code_review": {
+      "category": "review",
+      "system_role": "code_reviewer",
+      "prompt": "Review the following code changes:\n\n```{language}\n{code}\n```\n\nEvaluate based on:\n1. Code quality and readability\n2. Performance considerations\n3. Maintainability\n4. Adherence to SOLID principles\n5. Error handling\n6. Test coverage\n7. Documentation\n8. Potential bugs or edge cases\n\nProvide:\n- Overall assessment (Approve/Request Changes/Reject)\n- Specific issues with line numbers\n- Suggestions for improvement\n- Positive feedback on good practices",
+      "constraints": {
+        "max_tokens": 1800,
+        "tone": "constructive"
+      }
+    },
+    "refactoring": {
+      "category": "optimization",
+      "system_role": "expert_developer",
+      "prompt": "Refactor the following code to improve {aspect}:\n\n```{language}\n{code}\n```\n\nFocus on:\n- {primary_goal}\n- Maintain existing functionality\n- Improve code readability\n- Apply design patterns where appropriate\n- Reduce complexity\n- Enhance testability\n\nProvide:\n1. Refactored code\n2. Explanation of changes\n3. Benefits of the refactoring\n4. Any potential risks or considerations",
+      "constraints": {
+        "max_tokens": 2000,
+        "preserve_behavior": true
+      }
+    },
+    "test_generation": {
+      "category": "testing",
+      "system_role": "qa_engineer",
+      "prompt": "Generate comprehensive test cases for the following code:\n\n```{language}\n{code}\n```\n\nGenerate tests for:\n1. Happy path scenarios\n2. Edge cases\n3. Error conditions\n4. Boundary values\n5. Integration scenarios (if applicable)\n\nUse testing framework: {test_framework}\nInclude:\n- Unit tests\n- Integration tests (if applicable)\n- Mocks/stubs for external dependencies\n- Clear test descriptions\n- Arrange-Act-Assert pattern",
+      "constraints": {
+        "max_tokens": 1800,
+        "test_framework": "jest",
+        "coverage_target": 90
+      }
+    },
+    "documentation": {
+      "category": "documentation",
+      "system_role": "expert_developer",
+      "prompt": "Generate comprehensive documentation for:\n\n```{language}\n{code}\n```\n\nInclude:\n1. Overview and purpose\n2. Function/class documentation with JSDoc/docstring format\n3. Parameter descriptions with types\n4. Return value documentation\n5. Usage examples\n6. Important notes or warnings\n7. Related functions/classes\n\nFormat: {doc_format}",
+      "constraints": {
+        "max_tokens": 1200,
+        "doc_format": "JSDoc"
+      }
+    },
+    "bug_fix": {
+      "category": "debugging",
+      "system_role": "expert_developer",
+      "prompt": "Analyze and fix the following bug:\n\nBug description: {bug_description}\n\nCode:\n```{language}\n{code}\n```\n\nError message/stack trace:\n```\n{error_info}\n```\n\nProvide:\n1. Root cause analysis\n2. Fixed code\n3. Explanation of the fix\n4. Test case to prevent regression\n5. Any related issues to check",
+      "constraints": {
+        "max_tokens": 1500,
+        "include_tests": true
+      }
+    },
+    "feature_planning": {
+      "category": "planning",
+      "system_role": "architect",
+      "prompt": "Referencia el archivo product-overview.md para entender la visión general, el stack tecnológico y las funcionalidades clave. Ayúdame a planificar la arquitectura inicial y las fases de desarrollo.\n\nFeature: {feature_name}\nDescription: {feature_description}\nUser stories: {user_stories}\nAcceptance criteria: {acceptance_criteria}\n\n**IMPORTANTE:** Antes de proponer el plan o escribir cualquier línea de código, por favor hazme una serie de preguntas aclaratorias constructivas para resolver ambigüedades sobre el diseño, la navegación, el manejo de datos y la experiencia de usuario.\n\nUna vez respondidas (en la siguiente iteración), genera un plan detallado que incluya:\n1. Análisis de la estructura: Cómo se organizarán las carpetas y componentes.\n2. Implementación técnica: Qué interfaces de TypeScript, rutas de API y componentes reutilizables son necesarios.\n3. Fases de ejecución: Priorizando primero el diseño del frontend para validación visual.\n\nNo ejecutes ninguna acción de codificación hasta que yo apruebe explícitamente el plan.",
+      "constraints": {
+        "max_tokens": 2500,
+        "output_format": "structured_markdown"
+      }
+    },
+    "web_events_validation": {
+      "category": "validation",
+      "system_role": "qa_engineer",
+      "prompt": "Validate the following web implementation against the Web Events Checklist:\n\nFeature: {feature_name}\nCode:\n```{language}\n{code}\n```\n\nUsing the checklist at knowledge_base/technologies/frontend/web-events/, verify:\n\n1. **Events Implementation**\n   - Mouse events (if applicable)\n   - Keyboard events and shortcuts\n   - Form events and validation\n   - Touch/mobile events (if mobile support)\n   - Media events (if audio/video)\n\n2. **Security Compliance**\n   - Input validation (client + server)\n   - XSS prevention (sanitization)\n   - CSRF protection\n   - Authentication/authorization\n\n3. **Accessibility (A11y)**\n   - Keyboard navigation (Tab, Enter, ESC)\n   - ARIA labels and roles\n   - Screen reader support\n   - Focus management\n\n4. **Performance**\n   - Debounce/throttle for frequent events\n   - Event listener cleanup\n   - Memory leak prevention\n\n5. **UX Best Practices**\n   - Loading states\n   - Error feedback\n   - Success confirmation\n   - Responsive design\n\nProvide:\n- ✅ Checklist items PASSED (with evidence)\n- ❌ Checklist items FAILED (with specific issues)\n- ⚠️  Checklist items PARTIALLY implemented\n- 📝 Recommendations for improvement\n- 🔒 Security concerns found\n- ♿ Accessibility issues found\n- Overall compliance score (0-100%)",
+      "constraints": {
+        "max_tokens": 2500,
+        "output_format": "structured_markdown",
+        "reference_docs": "knowledge_base/technologies/frontend/web-events/"
+      }
+    },
+    "ecommerce_validation": {
+      "category": "validation",
+      "system_role": "qa_engineer",
+      "prompt": "Validate the e-commerce implementation against the comprehensive checklist:\n\nFeature: {feature_type} (product_listing/cart/checkout/post_purchase)\nCode:\n```{language}\n{code}\n```\n\nRefer to: knowledge_base/technologies/frontend/web-events/ecommerce-and-social.md\n\nValidate all required events for {feature_type}:\n\nIf product_listing:\n- [ ] View list/detail of products\n- [ ] Image gallery and zoom\n- [ ] Variant selection (color, size)\n- [ ] Stock availability\n- [ ] Search and filters\n- [ ] Reviews and ratings\n\nIf cart:\n- [ ] Add/remove products\n- [ ] Update quantities\n- [ ] Wishlist functionality\n- [ ] Apply/remove coupons\n- [ ] Calculate total\n- [ ] Cart persistence\n\nIf checkout:\n- [ ] Address input/validation\n- [ ] Shipping method selection\n- [ ] Payment information (SECURE!)\n- [ ] Order summary\n- [ ] Terms acceptance\n- [ ] Payment processing\n- [ ] Confirmation email\n\nIf post_purchase:\n- [ ] Order history\n- [ ] Order tracking\n- [ ] Cancel/return process\n- [ ] Re-order functionality\n\nCRITICAL Security Checks:\n- 🔒 HTTPS enforcement\n- 🔒 PCI DSS compliance (no raw card data storage)\n- 🔒 Payment gateway integration (tokenization)\n- 🔒 CSRF protection on all forms\n- 🔒 Rate limiting on checkout\n\nProvide detailed validation report with pass/fail for each item.",
+      "constraints": {
+        "max_tokens": 3000,
+        "output_format": "structured_markdown"
+      }
+    },
+    "accessibility_audit": {
+      "category": "validation",
+      "system_role": "qa_engineer",
+      "prompt": "Perform comprehensive accessibility (A11y) audit:\n\nComponent: {component_name}\nCode:\n```{language}\n{code}\n```\n\nRefer to: knowledge_base/technologies/frontend/web-events/data-ui-best-practices.md\n\nValidate WCAG 2.1 Level AA compliance:\n\n**Keyboard Navigation**\n- [ ] All interactive elements accessible via Tab\n- [ ] Logical tab order\n- [ ] Visible focus indicators\n- [ ] No keyboard traps\n- [ ] Shortcuts work correctly (Enter, Space, ESC, Arrows)\n\n**Screen Reader Support**\n- [ ] Proper ARIA labels (aria-label, aria-labelledby)\n- [ ] Correct ARIA roles (button, navigation, dialog, etc.)\n- [ ] ARIA states (aria-expanded, aria-selected, aria-checked)\n- [ ] ARIA live regions for dynamic content\n- [ ] Alt text on images\n- [ ] Landmark regions (header, nav, main, footer)\n\n**Visual Accessibility**\n- [ ] Color contrast ratio ≥ 4.5:1 (text)\n- [ ] Color contrast ratio ≥ 3:1 (UI components)\n- [ ] Text resizable to 200% without breaking\n- [ ] No information conveyed by color alone\n\n**Forms**\n- [ ] Labels associated with inputs\n- [ ] Error messages announced\n- [ ] Required fields indicated\n- [ ] Form validation accessible\n\n**Multimedia**\n- [ ] Captions/transcripts for video/audio\n- [ ] Audio descriptions (if applicable)\n\n**Responsive & Preferences**\n- [ ] Respects prefers-reduced-motion\n- [ ] Respects prefers-color-scheme\n- [ ] Works at 200% zoom\n- [ ] Mobile accessible (44x44px touch targets)\n\nTest with:\n- ✅ Keyboard-only navigation\n- ✅ Screen reader (NVDA/VoiceOver)\n- ✅ axe-core automated testing\n- ✅ Lighthouse accessibility score\n\nProvide:\n- Accessibility score (0-100)\n- Critical issues (blocking)\n- Important issues (should fix)\n- Minor issues (nice to have)\n- Specific remediation steps",
+      "constraints": {
+        "max_tokens": 2500,
+        "output_format": "structured_markdown"
+      }
+    },
+    "security_events_audit": {
+      "category": "security_analysis",
+      "system_role": "security_auditor",
+      "prompt": "Audit security of event handlers and user interactions:\n\nComponent: {component_name}\nCode:\n```{language}\n{code}\n```\n\nRefer to security sections in:\n- knowledge_base/technologies/frontend/web-events/README.md\n- knowledge_base/technologies/frontend/web-events/ecommerce-and-social.md\n\n**Input Validation & Sanitization**\n- [ ] All user inputs validated (client-side)\n- [ ] Server-side validation present (CRITICAL)\n- [ ] HTML/Script sanitization before display\n- [ ] SQL injection prevention (parameterized queries)\n- [ ] Command injection prevention\n\n**XSS Prevention**\n- [ ] Output escaping for dynamic content\n- [ ] No innerHTML with user data\n- [ ] Content Security Policy headers\n- [ ] Sanitize copied/pasted content\n\n**CSRF Protection**\n- [ ] CSRF tokens in all forms\n- [ ] SameSite cookie attribute\n- [ ] Verify referer/origin headers\n\n**Authentication & Session**\n- [ ] Secure session management\n- [ ] HttpOnly, Secure cookies\n- [ ] Proper logout (clear all tokens)\n- [ ] Session timeout implemented\n- [ ] Rate limiting on auth endpoints\n\n**Event-Specific Security**\n- [ ] File upload validation (type, size, malware scan)\n- [ ] Clipboard: No sensitive data exposure\n- [ ] Drag & drop: Validate dropped files\n- [ ] Context menu: No exposure of sensitive actions\n- [ ] Form submit: Prevent duplicate submissions\n\n**API Security**\n- [ ] HTTPS only (no mixed content)\n- [ ] API authentication required\n- [ ] Rate limiting on endpoints\n- [ ] CORS configured correctly\n\n**Common Vulnerabilities Check**\n- [ ] No eval() or Function() with user input\n- [ ] No setTimeout/setInterval with strings\n- [ ] No dangerouslySetInnerHTML (React)\n- [ ] No unsanitized template literals\n- [ ] No localStorage for sensitive data\n\nProvide:\n- Critical vulnerabilities (fix immediately)\n- High-risk issues (fix soon)\n- Medium-risk issues (should fix)\n- Recommendations\n- Compliance with OWASP Top 10",
+      "constraints": {
+        "max_tokens": 3000,
+        "output_format": "structured_json"
+      }
+    },
+    "performance_validation": {
+      "category": "optimization",
+      "system_role": "expert_developer",
+      "prompt": "Validate performance of event implementations:\n\nComponent: {component_name}\nCode:\n```{language}\n{code}\n```\n\n**Event Handler Performance**\n- [ ] Debounce implemented for input/resize (300ms recommended)\n- [ ] Throttle implemented for scroll (100-200ms recommended)\n- [ ] Passive event listeners for scroll/touch\n- [ ] Event delegation for dynamic lists\n- [ ] Proper cleanup (removeEventListener)\n\n**Memory Management**\n- [ ] No memory leaks (listeners removed on unmount)\n- [ ] Closure cleanup\n- [ ] Timer cleanup (clearTimeout, clearInterval)\n- [ ] Observer cleanup (IntersectionObserver, MutationObserver)\n\n**Rendering Performance**\n- [ ] No forced synchronous layouts\n- [ ] requestAnimationFrame for animations\n- [ ] Virtual scrolling for long lists\n- [ ] Lazy loading for images/components\n- [ ] Code splitting implemented\n\n**Network Performance**\n- [ ] API calls debounced/throttled\n- [ ] Request caching implemented\n- [ ] Optimistic UI updates\n- [ ] Background sync for offline\n\n**Bundle Size**\n- [ ] Tree shaking enabled\n- [ ] No unused dependencies\n- [ ] Dynamic imports for large features\n- [ ] Minification & compression\n\n**Core Web Vitals**\n- [ ] LCP (Largest Contentful Paint) < 2.5s\n- [ ] FID (First Input Delay) < 100ms\n- [ ] CLS (Cumulative Layout Shift) < 0.1\n\nMeasure with:\n- Lighthouse Performance score\n- Chrome DevTools Performance tab\n- WebPageTest\n\nProvide:\n- Performance score (0-100)\n- Bottlenecks identified\n- Specific optimizations recommended\n- Code examples for improvements",
+      "constraints": {
+        "max_tokens": 2500,
+        "output_format": "structured_markdown"
+      }
+    }
+  },
+  "context_injection_patterns": {
+    "with_planning_context": "Based on the project plan at {plan_path}, specifically the section on {section_name}:\n\n{task_prompt}",
+    "with_tech_stack": "Using the project's tech stack ({tech_stack}), and following the coding standards defined in the knowledge base:\n\n{task_prompt}",
+    "with_security_policies": "Adhering to the security policies defined in {security_policy_path}:\n\n{task_prompt}",
+    "with_existing_patterns": "Following the existing code patterns found in {reference_files}:\n\n{task_prompt}"
+  },
+  "few_shot_learning": {
+    "enabled": true,
+    "max_examples": 3,
+    "example_selection_strategy": "similarity_based"
+  }
+}

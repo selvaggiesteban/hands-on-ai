@@ -1,3 +1,8 @@
+---
+name: product-overview
+description: Use when [describe the use case for this skill].
+---
+
 # EXECUTIVE SUMMARY TEMPLATE - [PROJECT NAME]
 
 **[PROJECT TYPE / BRIEF DESCRIPTION]**

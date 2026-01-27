@@ -1,3 +1,8 @@
+---
+name: skill
+description: Use when [describe the use case for this skill].
+---
+
 ﻿---
 name: receiving-code-review
 description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation

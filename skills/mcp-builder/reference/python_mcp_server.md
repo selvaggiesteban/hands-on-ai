@@ -1,3 +1,8 @@
+---
+name: python_mcp_server
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Python MCP Server Implementation Guide
 
 ## Overview

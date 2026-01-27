@@ -1,3 +1,8 @@
+---
+name: final_validation_report
+description: Use when [describe the use case for this skill].
+---
+
 # Informe de Validación Final: Autonomía e Invocación de Herramientas
 
 **Fecha de Validación:** 2026-01-19

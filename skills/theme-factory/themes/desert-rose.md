@@ -1,20 +1,14 @@
-﻿# Desert Rose
+---
+name: desert-rose
+description: Use when applying the Desert Rose visual style (warm pinks and sandy tones) to a frontend component or application.
+---
 
-A soft and sophisticated theme with dusty, muted tones perfect for elegant presentations.
+# Desert Rose
+
+A warm and inviting theme inspired by desert landscapes at sunset.
 
 ## Color Palette
 
-- **Dusty Rose**: `#d4a5a5` - Soft primary color
-- **Clay**: `#b87d6d` - Earthy accent
-- **Sand**: `#e8d5c4` - Warm neutral backgrounds
-- **Deep Burgundy**: `#5d2e46` - Rich dark contrast
-
-## Typography
-
-- **Headers**: FreeSans Bold
-- **Body Text**: FreeSans
-
-## Best Used For
-
-Fashion presentations, beauty brands, wedding planning, interior design, boutique businesses.
-
+- **Sand**: `#f4a261` - Backgrounds and warmth
+- **Rose**: `#e76f51` - Primary accents
+- **Cactus**: `#2a9d8f` - Contrast elements

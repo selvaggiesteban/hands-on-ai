@@ -1,3 +1,8 @@
+---
+name: testing-anti-patterns
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Testing Anti-Patterns
 
 **Load this reference when:** writing or changing tests, adding mocks, or tempted to add test-only methods to production code.

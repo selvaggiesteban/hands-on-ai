@@ -1,0 +1,30 @@
+{
+  "template_type": "validation_report",
+  "version": "1.0",
+  "metadata": {
+    "validation_date": "{{date}}",
+    "validator_agent": "{{agent_name}}",
+    "target_system": "{{system_name}}"
+  },
+  "metrics": {
+    "autonomy_score": "{{score_0_10}}",
+    "tool_calling_reliability": "{{percentage}}",
+    "latency_ms": "{{latency}}",
+    "tokens_consumed": "{{tokens}}"
+  },
+  "validation_results": [
+    {
+      "provider": "{{provider_name}}",
+      "model": "{{model_name}}",
+      "status": "{{pass_fail}}",
+      "capabilities_verified": [
+        "{{capability_1}}",
+        "{{capability_2}}"
+      ]
+    }
+  ],
+  "guarantees": {
+    "architecture_ready": true,
+    "loop_closure_verified": true
+  }
+}

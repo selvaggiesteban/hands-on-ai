@@ -1,20 +1,14 @@
-﻿# Sunset Boulevard
+---
+name: sunset-boulevard
+description: Use when applying the Sunset Boulevard visual style (vibrant oranges and purples) to a frontend component or application.
+---
 
-A warm and vibrant theme inspired by golden hour sunsets, perfect for energetic and creative presentations.
+# Sunset Boulevard
+
+Vibrant and energetic, mixing city lights with sunset colors.
 
 ## Color Palette
 
-- **Burnt Orange**: `#e76f51` - Primary accent color
-- **Coral**: `#f4a261` - Secondary warm accent
-- **Warm Sand**: `#e9c46a` - Highlighting and backgrounds
-- **Deep Purple**: `#264653` - Dark contrast and text
-
-## Typography
-
-- **Headers**: DejaVu Serif Bold
-- **Body Text**: DejaVu Sans
-
-## Best Used For
-
-Creative pitches, marketing presentations, lifestyle brands, event promotions, inspirational content.
-
+- **Sunset Orange**: `#ff5722` - Primary actions
+- **City Purple**: `#9c27b0` - Secondary accents
+- **Asphalt**: `#263238` - Base color

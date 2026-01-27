@@ -1,3 +1,8 @@
+---
+name: project-metadata.template
+description: Use when [describe the use case for this skill].
+---
+
 # Project Metadata
 
 ## Required Fields

@@ -1,4 +1,13 @@
-﻿# FastAPI Agent
+---
+name: agents
+description: Use when [describe the use case for this skill].
+---
+
+﻿---
+name: fastapi-agents
+description: Use when developing high-performance web APIs with FastAPI, including Pydantic models, authentication, and database integration.
+---
+# FastAPI Agent
 
 **Skills:**
 - fastapi-basics

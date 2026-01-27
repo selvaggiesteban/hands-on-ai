@@ -1,3 +1,8 @@
+---
+name: plan
+description: Use when [describe the use case for this skill].
+---
+
 # ARCHITECTURE AND DEVELOPMENT PLAN TEMPLATE - [PROJECT NAME]
 
 **[PROJECT TYPE / BRIEF DESCRIPTION]**

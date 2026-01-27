@@ -1,0 +1,176 @@
+{
+  "example_matrix_target": "agent_combinations_for_digital_marketing",
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "task_examples": [
+    {
+      "task_id": "DM-001",
+      "task_description": "Launch a comprehensive SEO content campaign for a new feature.",
+      "agent_combination": [
+        "agents/management_strategy/product-manager.md",
+        "agents/data_ai/trend-analyst.md",
+        "agents/specialized/seo-specialist.md",
+        "agents/management_strategy/content-marketer.md",
+        "agents/core/review_agent.md"
+      ]
+    },
+    {
+      "task_id": "DM-002",
+      "task_description": "Analyze competitor social media strategy and create a counter-campaign.",
+      "agent_combination": [
+        "agents/management_strategy/competitive-analyst.md",
+        "agents/data_ai/trend-analyst.md",
+        "agents/management_strategy/content-marketer.md"
+      ]
+    },
+    {
+      "task_id": "DM-003",
+      "task_description": "Build an automated email welcome series for new subscribers.",
+      "agent_combination": [
+        "agents/management_strategy/customer-success-manager.md",
+        "agents/automation_tooling/workflow-orchestrator.md",
+        "agents/backend_api/python-pro.md"
+      ]
+    },
+    {
+      "task_id": "DM-004",
+      "task_description": "Generate a weekly performance report of all marketing channels.",
+      "agent_combination": [
+        "agents/data_ai/data-analyst.md",
+        "agents/automation_tooling/documentation-engineer.md"
+      ]
+    },
+    {
+      "task_id": "DM-005",
+      "task_description": "Redesign the main landing page for better conversion.",
+      "agent_combination": [
+        "agents/frontend_mobile/ux-researcher.md",
+        "agents/frontend_mobile/ui-designer.md",
+        "agents/frontend_mobile/react-specialist.md",
+        "agents/security_quality/qa-expert.md"
+      ]
+    },
+    {
+      "task_id": "DM-006",
+      "task_description": "Create a viral video script for a TikTok campaign.",
+      "agent_combination": [
+        "agents/management_strategy/content-marketer.md",
+        "agents/data_ai/trend-analyst.md"
+      ]
+    },
+    {
+      "task_id": "DM-007",
+      "task_description": "Set up and manage a Google Ads PPC campaign.",
+      "agent_combination": [
+        "agents/specialized/seo-specialist.md",
+        "agents/data_ai/data-analyst.md"
+      ]
+    },
+    {
+      "task_id": "DM-008",
+      "task_description": "Migrate the company blog from WordPress to a headless CMS.",
+      "agent_combination": [
+        "agents/backend_api/wordpress-master.md",
+        "agents/backend_api/graphql-architect.md",
+        "agents/devops_cloud/deployment-engineer.md"
+      ]
+    },
+    {
+      "task_id": "DM-009",
+      "task_description": "A/B test three different headlines for the pricing page.",
+      "agent_combination": [
+        "agents/frontend_mobile/frontend-developer.md",
+        "agents/data_ai/data-analyst.md"
+      ]
+    },
+    {
+      "task_id": "DM-010",
+      "task_description": "Develop a chatbot for lead qualification on the website.",
+      "agent_combination": [
+        "agents/data_ai/nlp-engineer.md",
+        "agents/backend_api/python-pro.md",
+        "agents/frontend_mobile/javascript-pro.md"
+      ]
+    },
+    {
+      "task_id": "DM-011",
+      "task_description": "Optimize website images and scripts for faster load times (Core Web Vitals).",
+      "agent_combination": [
+        "agents/security_quality/performance-engineer.md",
+        "agents/frontend_mobile/frontend-developer.md"
+      ]
+    },
+    {
+      "task_id": "DM-012",
+      "task_description": "Create a market research report on a new potential product category.",
+      "agent_combination": [
+        "agents/management_strategy/market-researcher.md",
+        "agents/data_ai/data-analyst.md"
+      ]
+    },
+    {
+      "task_id": "DM-013",
+      "task_description": "Localize the marketing website for the Spanish-speaking market.",
+      "agent_combination": [
+        "agents/management_strategy/technical-writer.md",
+        "agents/specialized/seo-specialist.md"
+      ]
+    },
+    {
+      "task_id": "DM-014",
+      "task_description": "Set up a customer data platform (CDP) to unify user analytics.",
+      "agent_combination": [
+        "agents/data_ai/data-engineer.md",
+        "agents/devops_cloud/cloud-architect.md"
+      ]
+    },
+    {
+      "task_id": "DM-015",
+      "task_description": "Design and automate the publication of a weekly podcast.",
+      "agent_combination": [
+        "agents/management_strategy/content-marketer.md",
+        "agents/automation_tooling/workflow-orchestrator.md"
+      ]
+    },
+    {
+      "task_id": "DM-016",
+      "task_description": "Build an influencer outreach list and initial contact template.",
+      "agent_combination": [
+        "agents/management_strategy/market-researcher.md",
+        "agents/management_strategy/content-marketer.md"
+      ]
+    },
+    {
+      "task_id": "DM-017",
+      "task_description": "Create a lead scoring model based on user behavior.",
+      "agent_combination": [
+        "agents/data_ai/data-scientist.md",
+        "agents/backend_api/python-pro.md"
+      ]
+    },
+    {
+      "task_id": "DM-018",
+      "task_description": "Ensure all marketing materials are WCAG 2.1 AA compliant.",
+      "agent_combination": [
+        "agents/security_quality/accessibility-tester.md",
+        "agents/frontend_mobile/frontend-developer.md"
+      ]
+    },
+    {
+      "task_id": "DM-019",
+      "task_description": "Generate product descriptions for a 1000-item e-commerce catalog.",
+      "agent_combination": [
+        "agents/data_ai/prompt-engineer.md",
+        "agents/backend_api/python-pro.md"
+      ]
+    },
+    {
+      "task_id": "DM-020",
+      "task_description": "Scrape competitor pricing and product features.",
+      "agent_combination": [
+        "agents/data_ai/data-engineer.md",
+        "agents/management_strategy/competitive-analyst.md"
+      ]
+    }
+  ]
+}

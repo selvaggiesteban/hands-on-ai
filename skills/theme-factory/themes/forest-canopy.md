@@ -1,20 +1,14 @@
-﻿# Forest Canopy
+---
+name: forest-canopy
+description: Use when applying the Forest Canopy visual style (deep greens and shadows) to a frontend component or application.
+---
 
-A natural and grounded theme featuring earth tones inspired by dense forest environments.
+# Forest Canopy
+
+A deep and mysterious theme reflecting the density of a forest.
 
 ## Color Palette
 
-- **Forest Green**: `#2d4a2b` - Primary dark green
-- **Sage**: `#7d8471` - Muted green accent
-- **Olive**: `#a4ac86` - Light accent color
-- **Ivory**: `#faf9f6` - Backgrounds and text
-
-## Typography
-
-- **Headers**: FreeSerif Bold
-- **Body Text**: FreeSans
-
-## Best Used For
-
-Environmental presentations, sustainability reports, outdoor brands, wellness content, organic products.
-
+- **Canopy Green**: `#2e7d32` - Primary elements
+- **Bark**: `#3e2723` - Dark accents
+- **Sunlight**: `#ffeb3b` - Highlighting

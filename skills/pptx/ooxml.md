@@ -1,3 +1,8 @@
+---
+name: ooxml
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Office Open XML Technical Reference for PowerPoint
 
 **Important: Read this entire document before starting.** Critical XML schema rules and formatting requirements are covered throughout. Incorrect implementation can create invalid PPTX files that PowerPoint cannot open.

@@ -1,0 +1,18 @@
+{
+  "project_index_entry_point": true,
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "description": "This is the master index for the Hands-On AI project. Use this file to discover all available assets and their relationships.",
+  "audit_matrices": {
+    "agents": "./matrix_agents_audit.json",
+    "checklists": "./matrix_checklist_audit.json",
+    "skills": "./matrix_skills_audit.json",
+    "scripts": "./matrix_scripts_audit.json"
+  },
+  "example_matrices": {
+    "agents": "./matrix_agents_examples.json",
+    "checklists": "./matrix_checklist_examples.json",
+    "skills": "./matrix_skills_examples.json",
+    "scripts": "./matrix_scripts_examples.json"
+  }
+}

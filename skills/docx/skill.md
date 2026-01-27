@@ -1,7 +1,6 @@
-﻿---
+---
 name: docx
-description: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
-license: Proprietary. LICENSE.txt has complete terms
+description: Use when creating, editing, or analyzing professional Word documents (.docx files), including tracked changes, comments, and formatting.
 ---
 
 # DOCX creation, editing, and analysis
@@ -66,7 +65,7 @@ When editing an existing Word document, use the **Document library** (a Python l
 
 ### Workflow
 1. **MANDATORY - READ ENTIRE FILE**: Read [`ooxml.md`](ooxml.md) (~600 lines) completely from start to finish. **NEVER set any range limits when reading this file.** Read the full file content for the Document library API and XML patterns for directly editing document files.
-2. Unpack the document: `python ooxml/scripts/unpack.py <office_file> <output_directory>`
+2. Unpack the document: `python ooxml/scripts/unpack.py <office_file> <dir>`
 3. Create and run a Python script using the Document library (see "Document Library" section in ooxml.md)
 4. Pack the final document: `python ooxml/scripts/pack.py <input_directory> <office_file>`
 

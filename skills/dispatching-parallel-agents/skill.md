@@ -1,6 +1,6 @@
-﻿---
+---
 name: dispatching-parallel-agents
-description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+description: Use when addressing 2+ independent tasks that can be executed concurrently without shared state.
 ---
 
 # Dispatching Parallel Agents
@@ -109,17 +109,17 @@ Return: Summary of what you found and what you fixed.
 
 ## Common Mistakes
 
-**âŒ Too broad:** "Fix all the tests" - agent gets lost
-**âœ… Specific:** "Fix agent-tool-abort.test.ts" - focused scope
+**Too broad:** "Fix all the tests" - agent gets lost
+**Specific:** "Fix agent-tool-abort.test.ts" - focused scope
 
-**âŒ No context:** "Fix the race condition" - agent doesn't know where
-**âœ… Context:** Paste the error messages and test names
+**No context:** "Fix the race condition" - agent doesn't know where
+**Context:** Paste the error messages and test names
 
-**âŒ No constraints:** Agent might refactor everything
-**âœ… Constraints:** "Do NOT change production code" or "Fix tests only"
+**No constraints:** Agent might refactor everything
+**Constraints:** "Do NOT change production code" or "Fix tests only"
 
-**âŒ Vague output:** "Fix it" - you don't know what changed
-**âœ… Specific:** "Return summary of root cause and changes"
+**Vague output:** "Fix it" - you don't know what changed
+**Specific:** "Return summary of root cause and changes"
 
 ## When NOT to Use
 
@@ -141,9 +141,9 @@ Return: Summary of what you found and what you fixed.
 
 **Dispatch:**
 ```
-Agent 1 â†’ Fix agent-tool-abort.test.ts
-Agent 2 â†’ Fix batch-completion-behavior.test.ts
-Agent 3 â†’ Fix tool-approval-race-conditions.test.ts
+Agent 1 -> Fix agent-tool-abort.test.ts
+Agent 2 -> Fix batch-completion-behavior.test.ts
+Agent 3 -> Fix tool-approval-race-conditions.test.ts
 ```
 
 **Results:**
@@ -178,4 +178,3 @@ From debugging session (2025-10-03):
 - All investigations completed concurrently
 - All fixes integrated successfully
 - Zero conflicts between agent changes
-

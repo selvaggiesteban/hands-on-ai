@@ -1,4 +1,13 @@
-﻿# DOCX Library Tutorial
+---
+name: docx-js
+description: Use when [describe the use case for this skill].
+---
+
+﻿---
+name: docx-js-library
+description: Use when generating or manipulating .docx files programmatically using the docx.js library in JavaScript or TypeScript.
+---
+# DOCX Library Tutorial
 
 Generate .docx files with JavaScript/TypeScript.
 

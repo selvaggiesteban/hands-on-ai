@@ -1,4 +1,13 @@
-﻿# Office Open XML Technical Reference
+---
+name: ooxml
+description: Use when [describe the use case for this skill].
+---
+
+﻿---
+name: docx-ooxml-reference
+description: Use when working with the underlying XML structure (OOXML) of .docx files for advanced manipulation or validation.
+---
+# Office Open XML Technical Reference
 
 **Important: Read this entire document before starting.** This document covers:
 - [Technical Guidelines](#technical-guidelines) - Schema compliance rules and validation requirements

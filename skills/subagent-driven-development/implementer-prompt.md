@@ -1,3 +1,8 @@
+---
+name: implementer-prompt
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Implementer Subagent Prompt Template
 
 Use this template when dispatching an implementer subagent.

@@ -1,3 +1,8 @@
+---
+name: adr-template
+description: Use when [describe the use case for this skill].
+---
+
 # ADR-000: [Title of Architectural Decision]
 
 - **Status:** [Proposed | Accepted | Rejected | Deprecated]

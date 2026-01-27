@@ -1,3 +1,8 @@
+---
+name: skill
+description: Use when [describe the use case for this skill].
+---
+
 ﻿---
 name: test-driven-development
 description: Use when implementing any feature or bugfix, before writing implementation code

@@ -1,3 +1,8 @@
+---
+name: workflows
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# Workflow Patterns
 
 ## Sequential Workflows

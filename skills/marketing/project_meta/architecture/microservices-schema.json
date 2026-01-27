@@ -1,0 +1,207 @@
+{
+  "architecture": {
+    "pattern": "microservices",
+    "description": "Microservices architecture pattern for scalable, distributed systems",
+    "services": [
+      {
+        "name": "user-service",
+        "bounded_context": "identity",
+        "description": "Manages user accounts, authentication, and profiles",
+        "api_contract": "openapi/user-service.yaml",
+        "dependencies": ["auth-service"],
+        "database": {
+          "type": "postgresql",
+          "schema": "users_db"
+        },
+        "deployment": {
+          "type": "container",
+          "orchestration": "kubernetes",
+          "replicas": 3,
+          "resources": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        },
+        "observability": {
+          "metrics": true,
+          "tracing": true,
+          "logging": true
+        }
+      },
+      {
+        "name": "auth-service",
+        "bounded_context": "security",
+        "description": "Handles authentication and authorization",
+        "api_contract": "openapi/auth-service.yaml",
+        "dependencies": [],
+        "database": {
+          "type": "redis",
+          "purpose": "session_storage"
+        },
+        "deployment": {
+          "type": "container",
+          "orchestration": "kubernetes",
+          "replicas": 2,
+          "resources": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          }
+        }
+      },
+      {
+        "name": "product-service",
+        "bounded_context": "catalog",
+        "description": "Manages product catalog and inventory",
+        "api_contract": "openapi/product-service.yaml",
+        "dependencies": [],
+        "database": {
+          "type": "mongodb",
+          "schema": "products_db"
+        },
+        "deployment": {
+          "type": "container",
+          "orchestration": "kubernetes",
+          "replicas": 4,
+          "resources": {
+            "cpu": "1000m",
+            "memory": "1Gi"
+          }
+        },
+        "caching": {
+          "enabled": true,
+          "provider": "redis",
+          "ttl": 300
+        }
+      },
+      {
+        "name": "order-service",
+        "bounded_context": "transactions",
+        "description": "Handles order processing and fulfillment",
+        "api_contract": "openapi/order-service.yaml",
+        "dependencies": ["user-service", "product-service", "payment-service"],
+        "database": {
+          "type": "postgresql",
+          "schema": "orders_db"
+        },
+        "deployment": {
+          "type": "container",
+          "orchestration": "kubernetes",
+          "replicas": 3,
+          "resources": {
+            "cpu": "750m",
+            "memory": "768Mi"
+          }
+        },
+        "message_queue": {
+          "enabled": true,
+          "provider": "kafka",
+          "topics": ["order.created", "order.updated", "order.cancelled"]
+        }
+      },
+      {
+        "name": "notification-service",
+        "bounded_context": "communication",
+        "description": "Sends notifications via email, SMS, push",
+        "api_contract": "openapi/notification-service.yaml",
+        "dependencies": ["user-service"],
+        "database": {
+          "type": "postgresql",
+          "schema": "notifications_db"
+        },
+        "deployment": {
+          "type": "container",
+          "orchestration": "kubernetes",
+          "replicas": 2,
+          "resources": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          }
+        },
+        "message_queue": {
+          "enabled": true,
+          "provider": "kafka",
+          "topics": ["notification.email", "notification.sms", "notification.push"]
+        }
+      }
+    ],
+    "communication": {
+      "sync": {
+        "protocol": "REST",
+        "format": "JSON",
+        "api_gateway": {
+          "enabled": true,
+          "provider": "Kong",
+          "features": ["rate_limiting", "authentication", "request_transformation"]
+        }
+      },
+      "async": {
+        "provider": "kafka",
+        "topics": [
+          {
+            "name": "order.created",
+            "partitions": 3,
+            "replication_factor": 2,
+            "consumers": ["notification-service", "analytics-service"]
+          },
+          {
+            "name": "user.registered",
+            "partitions": 2,
+            "replication_factor": 2,
+            "consumers": ["email-service", "analytics-service"]
+          }
+        ]
+      }
+    },
+    "service_mesh": {
+      "enabled": true,
+      "provider": "istio",
+      "features": [
+        "traffic_management",
+        "security",
+        "observability",
+        "resilience"
+      ]
+    },
+    "data_management": {
+      "pattern": "database_per_service",
+      "consistency": "eventual",
+      "saga_pattern": {
+        "enabled": true,
+        "orchestration": "choreography"
+      }
+    },
+    "observability": {
+      "metrics": {
+        "provider": "Prometheus",
+        "scrape_interval": "15s"
+      },
+      "logging": {
+        "provider": "ELK Stack",
+        "centralized": true
+      },
+      "tracing": {
+        "provider": "Jaeger",
+        "sampling_rate": 0.1
+      },
+      "dashboards": {
+        "provider": "Grafana",
+        "predefined": ["service_health", "request_rates", "error_rates"]
+      }
+    },
+    "resilience": {
+      "circuit_breaker": {
+        "enabled": true,
+        "threshold": 5,
+        "timeout": 60
+      },
+      "retry_policy": {
+        "max_attempts": 3,
+        "backoff": "exponential"
+      },
+      "timeout": {
+        "read": 30,
+        "connection": 10
+      }
+    }
+  }
+}

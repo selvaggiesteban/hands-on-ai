@@ -1,3 +1,8 @@
+---
+name: html2pptx
+description: Use when [describe the use case for this skill].
+---
+
 ﻿# HTML to PowerPoint Guide
 
 Convert HTML slides to PowerPoint presentations with accurate positioning using the `html2pptx.js` library.

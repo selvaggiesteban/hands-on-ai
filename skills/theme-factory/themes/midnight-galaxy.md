@@ -1,20 +1,14 @@
-﻿# Midnight Galaxy
+---
+name: midnight-galaxy
+description: Use when applying the Midnight Galaxy visual style (deep purples and starry whites) to a frontend component or application.
+---
 
-A dramatic and cosmic theme with deep purples and mystical tones for impactful presentations.
+# Midnight Galaxy
+
+A dark mode theme inspired by deep space and nebulas.
 
 ## Color Palette
 
-- **Deep Purple**: `#2b1e3e` - Rich dark base
-- **Cosmic Blue**: `#4a4e8f` - Mystical mid-tone
-- **Lavender**: `#a490c2` - Soft accent color
-- **Silver**: `#e6e6fa` - Light highlights and text
-
-## Typography
-
-- **Headers**: FreeSans Bold
-- **Body Text**: FreeSans
-
-## Best Used For
-
-Entertainment industry, gaming presentations, nightlife venues, luxury brands, creative agencies.
-
+- **Void**: `#121212` - Backgrounds
+- **Nebula Purple**: `#673ab7` - Primary accents
+- **Star White**: `#ffffff` - Text

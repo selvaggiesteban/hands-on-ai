@@ -1,0 +1,30 @@
+{
+  "template_type": "architectural_decision_record",
+  "version": "1.0",
+  "schema": {
+    "id": "ADR-{{number}}",
+    "title": "{{title}}",
+    "status": "{{status}}",
+    "date": "{{date}}",
+    "context": {
+      "problem_statement": "{{problem_description}}",
+      "forces": [
+        "{{force_1}}",
+        "{{force_2}}"
+      ]
+    },
+    "decision": {
+      "statement": "{{decision_statement}}",
+      "justification": "{{justification}}"
+    },
+    "consequences": {
+      "positive": ["{{positive_consequence_1}}"],
+      "negative": ["{{negative_consequence_1}}"],
+      "neutral": ["{{neutral_consequence_1}}"]
+    },
+    "scope": {
+      "affected_modules": ["{{module_1}}", "{{module_2}}"],
+      "compliance_checks": ["{{checklist_ref_1}}"]
+    }
+  }
+}

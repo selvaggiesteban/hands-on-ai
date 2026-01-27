@@ -1,0 +1,43 @@
+{
+  "example_matrix_target": "checklist_sequences_for_development_tasks",
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "task_examples": [
+    {
+      "task_id": "BE-001",
+      "task_description": "Develop a new REST API endpoint with database interaction.",
+      "checklist_sequence": [
+        "checklist/setup/checklist.md",
+        "checklist/databases/checklist.md",
+        "checklist/backend/checklist.md",
+        "checklist/languages/python/checklist.md",
+        "checklist/security/checklist.md",
+        "checklist/testing/checklist.md",
+        "checklist/code-review/checklist.md"
+      ]
+    },
+    {
+      "task_id": "FE-001",
+      "task_description": "Deploy a new version of the frontend application to production.",
+      "checklist_sequence": [
+        "checklist/frontend/checklist.md",
+        "checklist/performance-audit/checklist.md",
+        "checklist/accessibility/checklist.md",
+        "checklist/versioning/checklist.md",
+        "checklist/changelog/checklist.md",
+        "checklist/cloud/checklist.md"
+      ]
+    },
+    {
+      "task_id": "DO-001",
+      "task_description": "Set up a new CI/CD pipeline for a microservice.",
+      "checklist_sequence": [
+        "checklist/devops/checklist.json",
+        "checklist/git-branches/checklist.md",
+        "checklist/automation/checklist.md",
+        "checklist/security/checklist.md",
+        "checklist/logging/checklist.md"
+      ]
+    }
+  ]
+}

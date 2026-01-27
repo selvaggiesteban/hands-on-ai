@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Architecture and Development Plan Schema",
+  "description": "Schema for validating the project architecture and development plan file (plan.json).",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "projectType": {"type": "string"},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"},
+        "date": {"type": "string"},
+        "techStack": {"type": "string"}
+      },
+      "required": ["projectType", "version", "date", "techStack"]
+    },
+    "tableOfContents": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "ai_optimization": {
+      "type": "object",
+      "properties": {
+        "context_strategy": {"type": "string"},
+        "rag_enabled": {"type": "boolean"},
+        "token_budget_per_operation": {
+          "type": "object",
+          "properties": {
+            "planning": {"type": "integer"},
+            "code_generation": {"type": "integer"},
+            "review": {"type": "integer"},
+            "security_scan": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "security_policies": {
+      "type": "object",
+      "properties": {
+        "auth_strategy": {"type": "string"},
+        "compliance_requirements": {"type": "array", "items": {"type": "string"}},
+        "secrets_management": {"type": "string"}
+      }
+    },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "test_coverage_min": {"type": "integer", "minimum": 0, "maximum": 100},
+        "lighthouse_score_min": {"type": "integer", "minimum": 0, "maximum": 100},
+        "pre_commit_hooks": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "executiveSummaryAndArchitecturalDecisions": {"type": "object"},
+        "completeDataModel": {"type": "object"},
+        "technicalImplementationByModule": {"type": "object"},
+        "pendingDecisions": {"type": "object"}
+      }
+    }
+  },
+  "required": [
+    "title",
+    "metadata",
+    "sections"
+  ]
+}

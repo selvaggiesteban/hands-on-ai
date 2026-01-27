@@ -1,3 +1,8 @@
+---
+name: tool_calling_validation
+description: Use when [describe the use case for this skill].
+---
+
 # Informe de Validación de Invocación Automática de Herramientas (Tool Calling)
 
 **Fecha de Generación:** 2026-01-19

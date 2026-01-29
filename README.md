@@ -19,6 +19,66 @@ Our core philosophy is **"Machine-First"**: every aspect of the project's struct
 -   **Executable Codebase (Scripts):** A centralized hub for all automation tools and Python projects.
 -   **JSON-First Indexing:** A complete, machine-readable map of the entire project for effortless navigation and integration.
 
+## 📊 Project Resources at a Glance
+
+Below is a quantitative breakdown of the resources currently available in the system, categorized by their primary function and domain.
+
+### Summary
+
+| Resource | Valid Documents |
+| :--- | :---: |
+| **Agents** | **35** |
+| **Checklists** | **183** |
+| **Skills** | **134** |
+| **Scripts** | **26** |
+
+### Detailed Composition
+
+#### 1. Agents (35)
+
+| Category | Count |
+| :--- | :---: |
+| domain_experts | 20 |
+| automation | 7 |
+| core | 7 |
+| management_strategy | 1 |
+
+#### 2. Checklists (183)
+
+| Category | Count | Category | Count |
+| :--- | :---: | :--- | :---: |
+| Generic | 18 | Automation | 20 |
+| Python | 20 | JavaScript | 20 |
+| Go | 20 | Rust | 20 |
+| TypeScript | 20 | Setup | 11 |
+| Integrations | 9 | Languages | 5 |
+| Authentication | 3 | Web Servers | 3 |
+| Other (CMS, Cloud, Testing, etc.) | 14 | |
+
+#### 3. Skills (134)
+
+| Category | Count | Category | Count |
+| :--- | :---: | :--- | :---: |
+| marketing | 43 | theme-factory | 11 |
+| systematic-debugging | 9 | project_meta | 7 |
+| backend | 5 | internal-comms | 5 |
+| mcp-builder | 5 | frontend | 4 |
+| subagent-driven-development | 4 | skill-creator | 3 |
+| cloud | 3 | docx / pdf / pptx | 9 |
+| Other (Various specialized skills) | 26 | |
+
+#### 4. Scripts (26)
+
+| Type / Category | Count |
+| :--- | :---: |
+| marketing-tool | 12 |
+| tool-collection | 4 |
+| script-collection | 3 |
+| script | 3 |
+| tool | 2 |
+| core-script | 1 |
+| testing-collection | 1 |
+
 ## 🗺️ Machine-First Navigation: The Global Index
 
 The canonical source for understanding and traversing this project is the **Global JSON Index**. This file provides a complete, structured map for AI systems to discover all agents, skills, checklists, and scripts.

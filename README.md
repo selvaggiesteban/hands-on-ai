@@ -16,6 +16,7 @@ Our core philosophy is **"Machine-First"**: every aspect of the project's struct
 -   **Modular AI Persona:** Specialized agents for planning, coding, security, marketing, and more.
 -   **Dynamic Knowledge Base (Skills):** AI-readable guides and methodologies for rapid skill acquisition.
 -   **Automated Verification (Checklists):** Rigorous quality gates and compliance checks for every task.
+-   **Advanced AI Model Benchmarking:** Technical analysis and strategic profiles of industry-leading LLMs.
 -   **Executable Codebase (Scripts):** A centralized hub for all automation tools and Python projects.
 -   **JSON-First Indexing:** A complete, machine-readable map of the entire project for effortless navigation and integration.
 
@@ -31,6 +32,7 @@ Below is a quantitative breakdown of the resources currently available in the sy
 | **Checklists** | **183** |
 | **Skills** | **134** |
 | **Scripts** | **26** |
+| **Models** | **3** |
 
 ### Detailed Composition
 
@@ -79,6 +81,14 @@ Below is a quantitative breakdown of the resources currently available in the sy
 | core-script | 1 |
 | testing-collection | 1 |
 
+#### 5. Models (3)
+
+| Provider | Count |
+| :--- | :---: |
+| Anthropic | 1 |
+| Google | 1 |
+| OpenAI | 1 |
+
 ## 🗺️ Machine-First Navigation: The Global Index
 
 The canonical source for understanding and traversing this project is the **Global JSON Index**. This file provides a complete, structured map for AI systems to discover all agents, skills, checklists, and scripts.
@@ -107,6 +117,7 @@ While the JSON matrices are the authoritative source for machines, humans can st
 -   **`checklist/`**: Review quality assurance checklists.
 -   **`skills/`**: Dive into the knowledge base and methodologies.
 -   **`scripts/`**: Examine the executable automation tools.
+-   **`models/`**: Explore technical analysis and profiles of top LLMs.
 
 Each folder and skill document adheres to a strict, standardized format in American English, ensuring clarity and consistency.
 

@@ -63,32 +63,67 @@ No specific resources currently assigned.
 ### Phase 1: Audit and Discovery
 **Objective:** Establish a baseline and identify gaps using automation tooling checklists.
 
-*   **Action 1:** Deploy the **Auditor Agents** (referenced in section 2.1) to scan current systems.
-*   **Action 2:** Run all **Mandatory Compliance Checklists** (referenced in section 2.3) against existing assets.
-*   **Action 3:** Catalog all findings and generate a technical debt report.
+- [ ] **Action 1:** Deploy the **Auditor Agents** (referenced in section 2.1) to scan current systems.
+- [ ] **Action 2:** Run all **Mandatory Compliance Checklists** (referenced in section 2.3) against existing assets.
+- [ ] **Action 3:** Catalog all findings and generate a technical debt report.
 
 ### Phase 2: Strategy and Architecture
 **Objective:** Define the future state using specialized skills.
 
-*   **Action 1:** Utilize **Operational Skills** (referenced in section 2.2) to design the 2026 architecture.
-*   **Action 2:** Review plans with the **Strategic Agents** to ensure alignment with agency goals.
-*   **Action 3:** Define success metrics and Key Performance Indicators.
+- [ ] **Action 1:** Utilize **Operational Skills** (referenced in section 2.2) to design the 2026 architecture.
+- [ ] **Action 2:** Review plans with the **Strategic Agents** to ensure alignment with agency goals.
+- [ ] **Action 3:** Define success metrics and Key Performance Indicators.
 
 ### Phase 3: Implementation and Execution
 **Objective:** Build and deploy using automation scripts.
 
-*   **Action 1:** Execute **Automation and Scripting** tools (referenced in section 2.4) to scaffold projects.
-*   **Action 2:** Agents will perform tasks according to their defined capabilities.
-*   **Action 3:** Continuous integration of new features with real-time validation.
+- [ ] **Action 1:** Execute **Automation and Scripting** tools (referenced in section 2.4) to scaffold projects.
+- [ ] **Action 2:** Agents will perform tasks according to their defined capabilities.
+- [ ] **Action 3:** Continuous integration of new features with real-time validation.
 
 ### Phase 4: Optimization and Maintenance
 **Objective:** Ensure long-term stability and performance.
 
-*   **Action 1:** Scheduled re-runs of **Mandatory Compliance Checklists**.
-*   **Action 2:** Continuous learning and model fine-tuning for **Artificial Intelligence Agents**.
-*   **Action 3:** Quarterly reviews of **Operational Skills** to identify training needs.
+- [ ] **Action 1:** Scheduled re-runs of **Mandatory Compliance Checklists**.
+- [ ] **Action 2:** Continuous learning and model fine-tuning for **Artificial Intelligence Agents**.
+- [ ] **Action 3:** Quarterly reviews of **Operational Skills** to identify training needs.
 
 ---
 
 ## 4. Final Validation
 This plan is considered active and binding. All personnel and agents operating within the automation tooling domain must adhere to these protocols without exception.
+
+## 5. Telemetry System
+
+This section defines the mandatory standards for the **Telemetry System**, designed to monitor project health, agent performance, and operational efficiency across the `hands-on-ai` ecosystem.
+
+### 5.1 Core Metrics & Indicators
+The system must track and report the following metrics for each individual project:
+
+*   **Resource Utilization:**
+    *   `agent_invocations`: Total count of agent activations.
+    *   `skill_invocations`: Total count of specialized skill usages.
+    *   `script_executions`: Total count of automation script runs.
+*   **Project Volumetrics:**
+    *   `folders_created`: Total number of directories generated.
+    *   `files_created`: Total number of files generated.
+    *   `lines_of_code`: Total LOC count (excluding vendor/node_modules).
+*   **Quality & Compliance:**
+    *   `compliance_score`: A calculated score (0-100) based on the **Mandatory Compliance Checklists**.
+*   **Operational Efficiency:**
+    *   `task_completion_rate`: Percentage of planned tasks marked as completed.
+    *   `validation_retries`: Number of times a task was retried due to validation failure.
+    *   `failed_tasks`: Count of tasks that could not be completed after max retries.
+
+### 5.2 Progress Tracking Standard
+The system analyzes the "Phased Execution Roadmap" of each project plan to calculate progress.
+*   **Total Progress (0-100%):** Calculated as `(Completed Tasks / Total Tasks) * 100`.
+*   **Task Identification:**
+    *   Pending Task: `- [ ]`
+    *   Completed Task: `- [x]`
+*   **Visual Output:** The telemetry report must display a progress bar or percentage summary indicating the project's current status.
+
+### 5.3 Reporting Rules
+1.  **Granularity:** Reports must be generated per project (e.g., `src/Academicus`, `src/chat-vision`) and aggregated at the root level.
+2.  **Frequency:** Telemetry must be updated after every significant agent operation or batch process.
+3.  **Storage:** Metrics should be stored in a structured format (JSON/YAML) within the project's `project_meta` or `telemetry` directory for easy parsing.
